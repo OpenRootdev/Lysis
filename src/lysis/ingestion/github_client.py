@@ -66,11 +66,11 @@ class GitHubClient:
             return body
         raise RateLimitError("Still rate limited after retries")
 
-    def list_issues(self, owner, repo, labels=None, max_pages=3):
-        """Open issues for a repo, excluding pull requests."""
+    def list_issues(self, owner, repo, labels=None, max_pages=3, state="open"):
+        """Issues for a repo, excluding pull requests."""
         issues = []
         for page in range(1, max_pages + 1):
-            params = {"state": "open", "per_page": 100, "page": page}
+            params = {"state": state, "per_page": 100, "page": page}
             if labels:
                 params["labels"] = labels
             batch = self.get(f"/repos/{owner}/{repo}/issues", params)
