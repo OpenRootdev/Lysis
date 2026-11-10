@@ -5,6 +5,7 @@ requires-python = ">=3.11"
 
 [tool.ruff]
 line-length = 100
+extend-exclude = [".venv"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
