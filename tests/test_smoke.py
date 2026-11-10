@@ -1,2 +1,5 @@
+import lysis
+
+
 def test_import():
-    pass
+    assert lysis is not None
