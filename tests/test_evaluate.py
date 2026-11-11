@@ -11,3 +11,4 @@ def test_split_has_no_shared_repos():
     df = pd.DataFrame({"repo": list("aabbccdd") * 3, "first_timer": [0, 1] * 12})
     train, test = split_by_repo(df, test_frac=0.5)
     assert set(train["repo"]).isdisjoint(set(test["repo"]))
+    assert len(train) > 0 and len(test) > 0
