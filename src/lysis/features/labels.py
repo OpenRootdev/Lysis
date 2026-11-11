@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 from lysis.ingestion.github_client import GitHubClient
 
-LINK = re.compile(r"(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s*#(\d+)", re.I)
+LINK = re.compile(r"(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s*#(\d+)", re.IGNORECASE)
 
 
 def linked_issues(pr):
