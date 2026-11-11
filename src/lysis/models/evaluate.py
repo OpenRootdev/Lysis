@@ -6,6 +6,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from lysis.models.baseline import labels_only_ranker
+
 
 def load_dataset(raw_dir="data/raw", labels_path="data/labels.csv"):
     labels = (
@@ -61,6 +63,7 @@ def main():
     print(f"test: {len(test)} issues, {test['repo'].nunique()} repos")
     print(f"base rate: {test['first_timer'].mean():.3f}")
     print("random ranker:", evaluate(random_ranker, test))
+    print("labels-only:", evaluate(labels_only_ranker, test))
 
 
 if __name__ == "__main__":
