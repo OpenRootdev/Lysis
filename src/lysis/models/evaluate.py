@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from lysis.models.baseline import labels_only_ranker
+from lysis.models.gbm import make_gbm_ranker
 
 
 def load_dataset(raw_dir="data/raw", labels_path="data/labels.csv"):
@@ -59,11 +60,12 @@ def random_ranker(df):
 
 def main():
     df = load_dataset()
-    _, test = split_by_repo(df)
+    train, test = split_by_repo(df)
     print(f"test: {len(test)} issues, {test['repo'].nunique()} repos")
     print(f"base rate: {test['first_timer'].mean():.3f}")
     print("random ranker:", evaluate(random_ranker, test))
     print("labels-only:", evaluate(labels_only_ranker, test))
+    print("gbm:", evaluate(make_gbm_ranker(train), test))
 
 
 if __name__ == "__main__":
