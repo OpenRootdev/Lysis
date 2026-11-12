@@ -19,14 +19,23 @@ def load_dataset(raw_dir="data/raw", labels_path="data/labels.csv"):
     rows = []
     for path in Path(raw_dir).glob("*.json"):
         d = json.loads(path.read_text())
-        name = d["repo"]["full_name"]
+        r = d["repo"]
+        name = r["full_name"]
         rows += [
-            {
+        {
                 "repo": name,
                 "issue_number": i["number"],
                 "labels": [x["name"].lower() for x in i["labels"]],
                 "comments": i["comments"],
                 "body_len": len(i.get("body") or ""),
+                "title_len": len(i.get("title") or ""),
+                "has_code": int("```" in (i.get("body") or "")),
+                "author_assoc": i.get("author_association") or "NONE",
+                "stars": r["stargazers_count"],
+                "forks": r["forks_count"],
+                "repo_size": r["size"],
+                "has_license": int(bool(r.get("license"))),
+                "repo_created_at": r["created_at"],
                 "created_at": i["created_at"],
             }
             for i in d["closed_issues"]
