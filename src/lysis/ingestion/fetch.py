@@ -4,6 +4,7 @@ import json
 from datetime import date, timedelta
 from pathlib import Path
 
+import httpx
 from dotenv import load_dotenv
 
 from lysis.ingestion.github_client import GitHubClient
@@ -12,7 +13,7 @@ BANDS = ["50..300", "300..2000", "2000..20000"]
 OUT = Path("data/raw")
 
 
-def discover(gh, per_band=17):
+def discover(gh, per_band=100):
     since = (date.today() - timedelta(days=90)).isoformat()
     repos = []
     for band in BANDS:
@@ -41,7 +42,11 @@ def main():
         path = OUT / f"{name.replace('/', '__')}.json"
         if path.exists():
             continue
-        path.write_text(json.dumps(fetch_repo(gh, name)))
+        try:
+            path.write_text(json.dumps(fetch_repo(gh, name)))
+        except httpx.HTTPError as e:
+            print("skipped", name, e)
+            continue
         print("saved", name)
 
 
