@@ -31,6 +31,7 @@ def load_dataset(raw_dir="data/raw", labels_path="data/labels.csv"):
                 "comments": i["comments"],
                 "body_len": len(i.get("body") or ""),
                 "title_len": len(i.get("title") or ""),
+                "text": f"{i.get('title') or ''} {i.get('body') or ''}"[:2000],
                 "has_code": int("```" in (i.get("body") or "")),
                 "author_assoc": i.get("author_association") or "NONE",
                 "stars": r["stargazers_count"],
@@ -91,10 +92,7 @@ def main():
     print("random ranker:", evaluate(random_ranker, test))
     print("labels-only:", evaluate(labels_only_ranker, test))
     print("gbm:", evaluate(make_gbm_ranker(train), test))
-    rankers = {
-        "labels-only": lambda _: labels_only_ranker,
-        "gbm": make_gbm_ranker,
-    }
+    rankers = {"labels-only": lambda _: labels_only_ranker, "gbm": make_gbm_ranker}
     print("cv:", cross_validate(df, rankers))
 
 
