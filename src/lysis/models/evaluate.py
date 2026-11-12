@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from sklearn.metrics import average_precision_score, roc_auc_score
 
 from lysis.models.baseline import labels_only_ranker
 from lysis.models.gbm import make_gbm_ranker
@@ -60,7 +61,10 @@ def evaluate(ranker, df, ks=(10, 50, 100)):
     df = df.sample(frac=1, random_state=0).reset_index(drop=True)  # random tie-breaks
     y = df["first_timer"].tolist()
     scores = list(ranker(df))
-    return {f"p@{k}": round(precision_at_k(y, scores, k), 3) for k in ks if k <= len(y)}
+    out = {f"p@{k}": round(precision_at_k(y, scores, k), 3) for k in ks if k <= len(y)}
+    out["ap"] = round(average_precision_score(y, scores), 3)
+    out["auc"] = round(roc_auc_score(y, scores), 3)
+    return out
 
 
 def random_ranker(df):
