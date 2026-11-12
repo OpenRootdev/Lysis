@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.metrics import average_precision_score, roc_auc_score
+from sklearn.model_selection import GroupKFold
 
 from lysis.models.baseline import labels_only_ranker
 from lysis.models.gbm import make_gbm_ranker
@@ -70,6 +71,17 @@ def evaluate(ranker, df, ks=(10, 50, 100)):
 def random_ranker(df):
     return np.random.default_rng(0).random(len(df))
 
+def cross_validate(df, rankers, n_splits=5):
+    """rankers: {name: factory(train) -> ranker}. Mean AP/AUC over repo-grouped folds."""
+    res = {n: {"ap": [], "auc": []} for n in rankers}
+    for tr, te in GroupKFold(n_splits=n_splits).split(df, groups=df["repo"]):
+        train, test = df.iloc[tr], df.iloc[te]
+        for name, make in rankers.items():
+            m = evaluate(make(train), test, ks=())
+            res[name]["ap"].append(m["ap"])
+            res[name]["auc"].append(m["auc"])
+    return {n: {k: round(float(np.mean(v)), 3) for k, v in d.items()} for n, d in res.items()}
+
 
 def main():
     df = load_dataset()
@@ -79,6 +91,11 @@ def main():
     print("random ranker:", evaluate(random_ranker, test))
     print("labels-only:", evaluate(labels_only_ranker, test))
     print("gbm:", evaluate(make_gbm_ranker(train), test))
+    rankers = {
+        "labels-only": lambda _: labels_only_ranker,
+        "gbm": make_gbm_ranker,
+    }
+    print("cv:", cross_validate(df, rankers))
 
 
 if __name__ == "__main__":

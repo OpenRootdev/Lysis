@@ -24,6 +24,7 @@ FEATURE_COLUMNS = [
     "repo_size_log",
     "has_license",
     "repo_age_days",
+
 ]
 
 
@@ -44,4 +45,5 @@ def build_features(df):
         df["repo_created_at"], utc=True
     )
     out["repo_age_days"] = age.dt.days
+
     return out[FEATURE_COLUMNS]
