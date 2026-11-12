@@ -23,6 +23,7 @@ def load_dataset(raw_dir="data/raw", labels_path="data/labels.csv"):
         d = json.loads(path.read_text())
         r = d["repo"]
         name = r["full_name"]
+        cutoff = min((p["created_at"] for p in d["merged_prs"]), default=None)
         rows += [
         {
                 "repo": name,
@@ -42,8 +43,11 @@ def load_dataset(raw_dir="data/raw", labels_path="data/labels.csv"):
                 "created_at": i["created_at"],
             }
             for i in d["closed_issues"]
+            if cutoff and i["created_at"] >= cutoff
         ]
-    return labels.merge(pd.DataFrame(rows), on=["repo", "issue_number"])
+    df = pd.DataFrame(rows).merge(labels, on=["repo", "issue_number"], how="left")
+    df["first_timer"] = df["first_timer"].fillna(0).astype(int)
+    return df
 
 
 def split_by_repo(df, test_frac=0.3, seed=42):
