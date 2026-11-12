@@ -8,6 +8,7 @@ import pandas as pd
 from sklearn.metrics import average_precision_score, roc_auc_score
 from sklearn.model_selection import GroupKFold
 
+from lysis.features.rows import issue_row
 from lysis.models.baseline import labels_only_ranker
 from lysis.models.gbm import make_gbm_ranker
 
@@ -22,33 +23,15 @@ def load_dataset(raw_dir="data/raw", labels_path="data/labels.csv"):
     for path in Path(raw_dir).glob("*.json"):
         d = json.loads(path.read_text())
         r = d["repo"]
-        name = r["full_name"]
         cutoff = min((p["created_at"] for p in d["merged_prs"]), default=None)
         rows += [
-        {
-                "repo": name,
-                "issue_number": i["number"],
-                "labels": [x["name"].lower() for x in i["labels"]],
-                "comments": i["comments"],
-                "body_len": len(i.get("body") or ""),
-                "title_len": len(i.get("title") or ""),
-                "text": f"{i.get('title') or ''} {i.get('body') or ''}"[:2000],
-                "has_code": int("```" in (i.get("body") or "")),
-                "author_assoc": i.get("author_association") or "NONE",
-                "stars": r["stargazers_count"],
-                "forks": r["forks_count"],
-                "repo_size": r["size"],
-                "has_license": int(bool(r.get("license"))),
-                "repo_created_at": r["created_at"],
-                "created_at": i["created_at"],
-            }
+            issue_row(i, r)
             for i in d["closed_issues"]
             if cutoff and i["created_at"] >= cutoff
         ]
     df = pd.DataFrame(rows).merge(labels, on=["repo", "issue_number"], how="left")
     df["first_timer"] = df["first_timer"].fillna(0).astype(int)
     return df
-
 
 def split_by_repo(df, test_frac=0.3, seed=42):
     repos = pd.Series(sorted(df["repo"].unique())).sample(frac=1, random_state=seed)
