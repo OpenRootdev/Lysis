@@ -1,0 +1,27 @@
+{
+  "n_train": 7769,
+  "base_rate": 0.098,
+  "cv": {
+    "ap": 0.278,
+    "auc": 0.753
+  },
+  "trained_at": "2026-11-13T18:19:35.186273+00:00",
+  "sklearn": "1.9.1",
+  "features": [
+    "gfi",
+    "help_wanted",
+    "bug",
+    "docs",
+    "enhancement",
+    "n_labels",
+    "body_len_log",
+    "title_len",
+    "has_code",
+    "is_maintainer",
+    "stars_log",
+    "forks_log",
+    "repo_size_log",
+    "has_license",
+    "repo_age_days"
+  ]
+}

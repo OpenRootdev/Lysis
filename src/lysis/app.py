@@ -6,8 +6,7 @@ from dotenv import load_dotenv
 
 from lysis.cli import rank_repo
 from lysis.ingestion.github_client import GitHubClient
-from lysis.models.evaluate import load_dataset
-from lysis.models.gbm import make_gbm_ranker
+from lysis.models.artifact import load_meta, load_model
 
 load_dotenv()
 st.set_page_config(page_title="Lysis", page_icon="🧭")
@@ -15,14 +14,16 @@ st.set_page_config(page_title="Lysis", page_icon="🧭")
 
 @st.cache_resource
 def get_model():
-    df = load_dataset()
-    return make_gbm_ranker(df), len(df), df["first_timer"].mean()
+    return load_model(), load_meta()
 
 
-ranker, n, base = get_model()
+ranker, meta = get_model()
 st.title("Lysis")
 st.caption("Beginner-friendly GitHub issue ranker")
-st.sidebar.write(f"Model trained on {n:,} closed issues. Base rate: {base:.2f}")
+st.sidebar.write(
+    f"Model trained {meta['trained_at'][:10]} on {meta['n_train']:,} issues. "
+    f"CV AP {meta['cv']['ap']}, AUC {meta['cv']['auc']}"
+)
 repo = st.text_input("Repository", "psf/requests", placeholder="owner/repo")
 top = st.slider("Top N", 5, 30, 10)
 
