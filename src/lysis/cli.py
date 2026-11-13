@@ -7,8 +7,7 @@ from dotenv import load_dotenv
 
 from lysis.features.rows import issue_row
 from lysis.ingestion.github_client import GitHubClient
-from lysis.models.evaluate import load_dataset
-from lysis.models.gbm import make_gbm_ranker
+from lysis.models.artifact import load_model
 
 
 def rank_repo(gh, full_name, ranker, top=10, half_life_days=365):
@@ -33,7 +32,7 @@ def main():
     if len(sys.argv) < 2:
         sys.exit("usage: python src\\lysis\\cli.py owner/repo [top]")
     top = int(sys.argv[2]) if len(sys.argv) > 2 else 10
-    ranker = make_gbm_ranker(load_dataset())
+    ranker = load_model()
     print(rank_repo(GitHubClient(), sys.argv[1], ranker, top).to_string(index=False))
 
 
