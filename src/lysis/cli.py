@@ -11,7 +11,7 @@ from lysis.models.evaluate import load_dataset
 from lysis.models.gbm import make_gbm_ranker
 
 
-def rank_repo(gh, full_name, ranker, top=10):
+def rank_repo(gh, full_name, ranker, top=10, half_life_days=365):
     owner, name = full_name.split("/")
     repo = gh.get(f"/repos/{full_name}")
     issues = [i for i in gh.list_issues(owner, name, state="open") if not i.get("assignees")]
@@ -19,6 +19,8 @@ def rank_repo(gh, full_name, ranker, top=10):
         return pd.DataFrame(columns=["score", "number", "title", "url"])
     df = pd.DataFrame([issue_row(i, repo) for i in issues])
     df["score"] = list(ranker(df))
+    age = (pd.Timestamp.now(tz="UTC") - pd.to_datetime(df["created_at"], utc=True)).dt.days
+    df["score"] = df["score"] * 0.5 ** (age.clip(lower=0) / half_life_days)
     df = df.sort_values("score", ascending=False).head(top)
     df["number"] = df["issue_number"]
     df["title"] = df["title"].str[:60]
