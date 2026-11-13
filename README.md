@@ -4,6 +4,8 @@ Beginner-friendly GitHub issue ranker. Give it a repo and it ranks the open issu
 
 Labels like `good first issue` are often stale or wrong, so Lysis learns from what actually happened: issues that first-time contributors really closed.
 
+**Live demo:** https://mcx78yh52appm5botjqrh52.streamlit.app/
+
 ## How it works
 
 1. **Ingest:** fetch repos, issues and merged PRs from the GitHub API (ETag-cached).
@@ -70,3 +72,4 @@ tests/
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Look for issues labeled `good first issue`.
+
