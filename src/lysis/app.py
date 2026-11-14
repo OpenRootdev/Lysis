@@ -24,6 +24,9 @@ st.sidebar.write(
     f"Model trained {meta['trained_at'][:10]} on {meta['n_train']:,} issues. "
     f"CV AP {meta['cv']['ap']}, AUC {meta['cv']['auc']}"
 )
+if "importance" in meta:
+    st.sidebar.subheader("What the model relies on")
+    st.sidebar.bar_chart(meta["importance"])
 repo = st.text_input("Repository", "psf/requests", placeholder="owner/repo")
 top = st.slider("Top N", 5, 30, 10)
 
