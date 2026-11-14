@@ -11,9 +11,11 @@ LABEL_FLAGS = {
     "enhancement": "enhancement",
 }
 MAINTAINER_ASSOC = ["OWNER", "MEMBER", "COLLABORATOR"]
+LANGUAGES = ["python", "javascript", "typescript"]
 
 FEATURE_COLUMNS = [
     *LABEL_FLAGS,
+    *[f"lang_{lang}" for lang in LANGUAGES],
     "n_labels",
     "body_len_log",
     "title_len",
@@ -25,7 +27,6 @@ FEATURE_COLUMNS = [
     "merge_gap_days",
     
 ]
-
 
 def build_features(df):
     out = pd.DataFrame(index=df.index)
@@ -43,4 +44,7 @@ def build_features(df):
     out["repo_age_days"] = age.dt.days
     out["prs_90d"] = df["prs_90d"]
     out["merge_gap_days"] = df["merge_gap_days"]
+    
+    for lang in LANGUAGES:
+        out[f"lang_{lang}"] = (df["language"] == lang).astype(int)
     return out[FEATURE_COLUMNS]

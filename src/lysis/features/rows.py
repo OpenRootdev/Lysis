@@ -30,6 +30,7 @@ def issue_row(issue, repo, merged):
         "has_code": int("```" in body),
         "author_assoc": issue.get("author_association") or "NONE",
         "has_license": int(bool(repo.get("license"))),
+        "language": (repo.get("language") or "").lower(),
         "repo_created_at": repo["created_at"],
         "created_at": issue["created_at"],
         **pr_activity(merged, issue["created_at"]),

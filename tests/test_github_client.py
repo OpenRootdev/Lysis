@@ -37,3 +37,17 @@ def test_list_issues_skips_prs(tmp_path):
     data = [{"number": 1}, {"number": 2, "pull_request": {}}]
     gh = make_client(lambda request: httpx.Response(200, json=data), tmp_path)
     assert gh.list_issues("o", "r") == [{"number": 1}]
+    
+def test_get_retries_on_network_error(tmp_path, monkeypatch):
+    monkeypatch.setattr("time.sleep", lambda s: None)
+    calls = []
+
+    def handler(request):
+        calls.append(1)
+        if len(calls) == 1:
+            raise httpx.ReadError("boom")
+        return httpx.Response(200, json={"ok": 1})
+
+    http = httpx.Client(transport=httpx.MockTransport(handler), base_url="https://api.github.com")
+    gh = GitHubClient(token="x", cache_dir=tmp_path, client=http)
+    assert gh.get("/x") == {"ok": 1}
