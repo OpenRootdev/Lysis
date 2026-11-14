@@ -1,5 +1,6 @@
 """Discover Python repos and save raw issues/PRs to data/raw/."""
 
+import argparse
 import json
 from datetime import date, timedelta
 from pathlib import Path
@@ -13,11 +14,11 @@ BANDS = ["50..300", "300..2000", "2000..20000"]
 OUT = Path("data/raw")
 
 
-def discover(gh, per_band=100):
+def discover(gh, per_band=100, language="python"):
     since = (date.today() - timedelta(days=90)).isoformat()
     repos = []
     for band in BANDS:
-        q = f"language:python stars:{band} pushed:>{since} good-first-issues:>2 archived:false"
+        q = f'language:"{language}" stars:{band} pushed:>{since} good-first-issues:>2 archived:false'
         data = gh.get("/search/repositories", {"q": q, "sort": "updated", "per_page": per_band})
         repos += [r["full_name"] for r in data["items"]]
     return repos
@@ -35,10 +36,13 @@ def fetch_repo(gh, full_name):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--language", default="python")
+    args = parser.parse_args()
     load_dotenv()
     gh = GitHubClient()
     OUT.mkdir(parents=True, exist_ok=True)
-    for name in discover(gh):
+    for name in discover(gh, language=args.language):
         path = OUT / f"{name.replace('/', '__')}.json"
         if path.exists():
             continue
@@ -48,7 +52,6 @@ def main():
             print("skipped", name, e)
             continue
         print("saved", name)
-
 
 if __name__ == "__main__":
     main()
