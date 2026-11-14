@@ -25,6 +25,7 @@ This is an early prototype. The model beats the baseline, but the signal is mode
 
 ## Quick start
 
+
 ```bash
 git clone https://github.com/OpenRootdev/Lysis.git
 cd Lysis
@@ -40,6 +41,7 @@ Build the dataset (once, takes a while, cached):
 python src/lysis/ingestion/fetch.py
 python src/lysis/features/labels.py
 python src/lysis/models/evaluate.py
+python src/lysis/ingestion/fetch.py --language javascript   # default: python
 ```
 
 Rank issues:
