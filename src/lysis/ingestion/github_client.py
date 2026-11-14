@@ -16,10 +16,12 @@ class RateLimitError(Exception):
 
 
 class GitHubClient:
-    def __init__(self, token=None, cache_dir="data/cache", client=None, max_wait=120):
+    def __init__(self, token=None, cache_dir="data/cache", client=None, max_wait=None):
         token = token or os.getenv("GITHUB_TOKEN")
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+        if max_wait is None:
+            max_wait = int(os.getenv("LYSIS_MAX_WAIT", "120"))
         self.max_wait = max_wait
         headers = {
             "Accept": "application/vnd.github+json",
