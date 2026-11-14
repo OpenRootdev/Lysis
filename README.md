@@ -18,8 +18,8 @@ Labels like `good first issue` are often stale or wrong, so Lysis learns from wh
 | Ranker | AP | AUC |
 |---|---|---|
 | random | ~0.10 | 0.50 |
-| labels-only baseline | 0.245 | 0.678 |
-| gradient boosting | 0.278 | 0.753 |
+| labels-only baseline | 0.246 | 0.678 |
+| gradient boosting | 0.305 | 0.762 |
 
 This is an early prototype. The model beats the baseline, but the signal is modest.
 
@@ -63,7 +63,6 @@ tests/
 
 ## Known limitations
 
-- Repo stats come from fetch time, not issue time (a small leak; removing them costs about 0.025 AP).
 - Only Python repos so far.
 - Labels depend on PRs linking issues with `closes #N`.
 

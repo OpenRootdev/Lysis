@@ -19,12 +19,11 @@ FEATURE_COLUMNS = [
     "title_len",
     "has_code",
     "is_maintainer",
-    "stars_log",
-    "forks_log",
-    "repo_size_log",
     "has_license",
     "repo_age_days",
-
+    "prs_90d",
+    "merge_gap_days",
+    
 ]
 
 
@@ -37,13 +36,11 @@ def build_features(df):
     out["title_len"] = df["title_len"]
     out["has_code"] = df["has_code"]
     out["is_maintainer"] = df["author_assoc"].isin(MAINTAINER_ASSOC).astype(int)
-    out["stars_log"] = np.log1p(df["stars"])
-    out["forks_log"] = np.log1p(df["forks"])
-    out["repo_size_log"] = np.log1p(df["repo_size"])
     out["has_license"] = df["has_license"]
     age = pd.to_datetime(df["created_at"], utc=True) - pd.to_datetime(
         df["repo_created_at"], utc=True
     )
     out["repo_age_days"] = age.dt.days
-
+    out["prs_90d"] = df["prs_90d"]
+    out["merge_gap_days"] = df["merge_gap_days"]
     return out[FEATURE_COLUMNS]
