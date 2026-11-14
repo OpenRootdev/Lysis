@@ -71,7 +71,30 @@ def cross_validate(df, rankers, n_splits=5):
             m = evaluate(make(train), test, ks=())
             res[name]["ap"].append(m["ap"])
             res[name]["auc"].append(m["auc"])
-    return {n: {k: round(float(np.mean(v)), 3) for k, v in d.items()} for n, d in res.items()}
+    return {n: {k: round(float(np.mean(v)), 3) for k, v in d.items()} for n, d in res.items()}\
+
+
+def cv_by_language(df, rankers, n_splits=5, min_n=200):
+    """Out-of-fold scores, then AP/AUC per language."""
+    df = df.reset_index(drop=True)
+    preds = {n: np.zeros(len(df)) for n in rankers}
+    for tr, te in GroupKFold(n_splits=n_splits).split(df, groups=df["repo"]):
+        for name, make in rankers.items():
+            preds[name][te] = list(make(df.iloc[tr])(df.iloc[te]))
+    out = {}
+    for lang, g in df.groupby("language"):
+        if len(g) < min_n or g["first_timer"].nunique() < 2:
+            continue
+        idx, y = g.index.to_numpy(), g["first_timer"]
+        out[lang] = {"n": len(g), "base": round(float(y.mean()), 3)}
+        for name in rankers:
+            s = preds[name][idx]
+            out[lang][name] = {
+                "ap": round(average_precision_score(y, s), 3),
+                "auc": round(roc_auc_score(y, s), 3),
+            }
+    return out
+
 
 
 def main():
@@ -87,6 +110,8 @@ def main():
         "gbm": make_gbm_ranker,
     }
     print("cv:", cross_validate(df, rankers))
+    for lang, res in cv_by_language(df, rankers).items():
+        print("lang:", lang, res)
 
 
 if __name__ == "__main__":
