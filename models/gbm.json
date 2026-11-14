@@ -1,21 +1,21 @@
 {
-  "n_train": 7769,
-  "base_rate": 0.098,
+  "n_train": 18338,
+  "base_rate": 0.066,
   "cv": {
-    "ap": 0.305,
-    "auc": 0.762
+    "ap": 0.26,
+    "auc": 0.795
   },
   "importance": {
-    "gfi": 0.2472,
-    "repo_age_days": 0.1434,
-    "title_len": 0.0776,
-    "prs_90d": 0.0753,
-    "body_len_log": 0.0568,
-    "is_maintainer": 0.0434,
-    "help_wanted": 0.0419,
-    "has_code": 0.0417
+    "gfi": 0.2115,
+    "repo_age_days": 0.0882,
+    "title_len": 0.0668,
+    "n_labels": 0.0477,
+    "prs_90d": 0.0397,
+    "body_len_log": 0.0389,
+    "has_code": 0.0271,
+    "lang_python": 0.0265
   },
-  "trained_at": "2026-11-14T09:30:42.885654+00:00",
+  "trained_at": "2026-11-14T22:42:58.422225+00:00",
   "sklearn": "1.9.1",
   "features": [
     "gfi",
@@ -23,6 +23,9 @@
     "bug",
     "docs",
     "enhancement",
+    "lang_python",
+    "lang_javascript",
+    "lang_typescript",
     "n_labels",
     "body_len_log",
     "title_len",

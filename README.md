@@ -18,9 +18,10 @@ Labels like `good first issue` are often stale or wrong, so Lysis learns from wh
 | Ranker | AP | AUC |
 |---|---|---|
 | random | ~0.10 | 0.50 |
-| labels-only baseline | 0.246 | 0.678 |
-| gradient boosting | 0.305 | 0.762 |
+| labels-only baseline | 0.195 | 0.746 |
+| gradient boosting | 0.26 | 0.795 |
 
+Trained on Python and JavaScript repos (base rate 0.06).
 This is an early prototype. The model beats the baseline, but the signal is modest.
 
 ## Quick start
