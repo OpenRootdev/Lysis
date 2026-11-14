@@ -50,12 +50,16 @@ class GitHubClient:
             raise RateLimitError(f"Rate limited; reset in {int(wait)}s")
         time.sleep(max(wait, 0))
 
-    def get(self, path, params=None, retries=3):
+    def get(self, path, params=None, retries=5):
         cache_file = self._cache_file(path, params)
         cached = json.loads(cache_file.read_text()) if cache_file.exists() else None
         headers = {"If-None-Match": cached["etag"]} if cached else {}
-        for _ in range(retries):
-            resp = self.http.get(path, params=params, headers=headers)
+        for attempt in range(retries):
+            try:
+                resp = self.http.get(path, params=params, headers=headers)
+            except httpx.TransportError:
+                time.sleep(2**attempt)
+                continue
             if self._limited(resp):
                 self._wait(resp)
                 continue

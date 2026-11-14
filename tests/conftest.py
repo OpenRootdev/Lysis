@@ -17,6 +17,7 @@ def issues_df():
             "created_at": ["2026-01-10T00:00:00Z"] * 20,
             "repo_created_at": ["2020-01-01T00:00:00Z"] * 20,
             "first_timer": [1, 0, 1, 0] * 5,
+            "language": ["python", "javascript", "python", "typescript"] * 5,
             
         }
     )
