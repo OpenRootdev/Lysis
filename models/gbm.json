@@ -5,7 +5,17 @@
     "ap": 0.305,
     "auc": 0.762
   },
-  "trained_at": "2026-11-14T06:58:57.894693+00:00",
+  "importance": {
+    "gfi": 0.2472,
+    "repo_age_days": 0.1434,
+    "title_len": 0.0776,
+    "prs_90d": 0.0753,
+    "body_len_log": 0.0568,
+    "is_maintainer": 0.0434,
+    "help_wanted": 0.0419,
+    "has_code": 0.0417
+  },
+  "trained_at": "2026-11-14T09:30:42.885654+00:00",
   "sklearn": "1.9.1",
   "features": [
     "gfi",
