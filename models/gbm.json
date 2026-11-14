@@ -2,10 +2,10 @@
   "n_train": 7769,
   "base_rate": 0.098,
   "cv": {
-    "ap": 0.278,
-    "auc": 0.753
+    "ap": 0.305,
+    "auc": 0.762
   },
-  "trained_at": "2026-11-13T18:19:35.186273+00:00",
+  "trained_at": "2026-11-14T06:58:57.894693+00:00",
   "sklearn": "1.9.1",
   "features": [
     "gfi",
@@ -18,10 +18,9 @@
     "title_len",
     "has_code",
     "is_maintainer",
-    "stars_log",
-    "forks_log",
-    "repo_size_log",
     "has_license",
-    "repo_age_days"
+    "repo_age_days",
+    "prs_90d",
+    "merge_gap_days"
   ]
 }

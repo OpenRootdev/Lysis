@@ -3,14 +3,9 @@ from lysis.cli import rank_repo
 
 class FakeGH:
     def get(self, path, params=None):
-        return {
-            "full_name": "a/b",
-            "stargazers_count": 10,
-            "forks_count": 1,
-            "size": 100,
-            "license": None,
-            "created_at": "2020-01-01T00:00:00Z",
-        }
+        if path.endswith("/pulls"):
+            return []
+        return {"full_name": "a/b", "license": None, "created_at": "2020-01-01T00:00:00Z"}
 
     def list_issues(self, owner, repo, state="open"):
         base = {

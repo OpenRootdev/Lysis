@@ -8,7 +8,7 @@ import pandas as pd
 from sklearn.metrics import average_precision_score, roc_auc_score
 from sklearn.model_selection import GroupKFold
 
-from lysis.features.rows import issue_row
+from lysis.features.rows import issue_row, merged_times
 from lysis.models.baseline import labels_only_ranker
 from lysis.models.gbm import make_gbm_ranker
 
@@ -23,11 +23,14 @@ def load_dataset(raw_dir="data/raw", labels_path="data/labels.csv"):
     for path in Path(raw_dir).glob("*.json"):
         d = json.loads(path.read_text())
         r = d["repo"]
-        cutoff = min((p["created_at"] for p in d["merged_prs"]), default=None)
+        prs = d["merged_prs"]
+        merged = merged_times(prs)
+        starts = [pd.Timestamp(p["created_at"]) for p in prs]
+        cutoff = min(starts) if starts else None
         rows += [
-            issue_row(i, r)
+            issue_row(i, r, merged)
             for i in d["closed_issues"]
-            if cutoff and i["created_at"] >= cutoff
+            if cutoff is not None and pd.Timestamp(i["created_at"]) >= cutoff
         ]
     df = pd.DataFrame(rows).merge(labels, on=["repo", "issue_number"], how="left")
     df["first_timer"] = df["first_timer"].fillna(0).astype(int)
@@ -79,7 +82,10 @@ def main():
     print("random ranker:", evaluate(random_ranker, test))
     print("labels-only:", evaluate(labels_only_ranker, test))
     print("gbm:", evaluate(make_gbm_ranker(train), test))
-    rankers = {"labels-only": lambda _: labels_only_ranker, "gbm": make_gbm_ranker}
+    rankers = {
+        "labels-only": lambda _: labels_only_ranker,
+        "gbm": make_gbm_ranker,
+    }
     print("cv:", cross_validate(df, rankers))
 
 
