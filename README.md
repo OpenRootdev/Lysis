@@ -25,6 +25,7 @@ Labels like `good first issue` are often stale or wrong, so Lysis learns from wh
 Python: AP 0.296 vs 0.223 for labels-only. JavaScript: AP 0.169 vs 0.146 (smaller gain).
 Trained on Python and JavaScript repos (base rate 0.06).
 This is an early prototype. The model beats the baseline, but the signal is modest.
+The demo logs a 👍/👎 with the repo, issue number and score when you vote. No personal data is collected
 
 ## Quick start
 
@@ -71,6 +72,7 @@ tests/
 
 - Only Python repos so far.
 - Labels depend on PRs linking issues with `closes #N`.
+- 
 
 ## Contributing
 

@@ -16,12 +16,9 @@ def log_feedback(repo, number, score, helpful, model_date, http=None):
         "helpful": bool(helpful),
         "model_date": model_date,
     }
-    headers = {
-        "apikey": key,
-        "Authorization": f"Bearer {key}",
-        "Content-Type": "application/json",
-        "Prefer": "return=minimal",
-    }
+    headers = {"apikey": key, "Content-Type": "application/json", "Prefer": "return=minimal"}
+    if key.startswith("eyJ"):
+        headers["Authorization"] = f"Bearer {key}"
     try:
         r = (http or httpx).post(f"{url}/rest/v1/feedback", json=row, headers=headers, timeout=15)
         r.raise_for_status()
