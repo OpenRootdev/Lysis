@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 from lysis.cli import SHOW, rank_repo
 from lysis.explain import explain_issue
+from lysis.feedback import log_feedback
 from lysis.ingestion.github_client import GitHubClient
 from lysis.models.artifact import load_meta, load_model
 
@@ -36,26 +37,44 @@ if "importance" in meta:
 repo = st.text_input("Repository", "psf/requests", placeholder="owner/repo")
 top = st.slider("Top N", 5, 30, 10)
 
+def vote(repo_name, number, score, key):
+    val = st.session_state.get(key)
+    if val is not None:
+        log_feedback(repo_name, number, score, val == 1, meta["trained_at"][:10])
+
+
 if st.button("Rank issues") and "/" in repo:
     try:
         with st.spinner("Fetching and ranking..."):
-            out = rank_repo(GitHubClient(), repo.strip(), ranker, top)
+            st.session_state["out"] = rank_repo(GitHubClient(), repo.strip(), ranker, top)
+            st.session_state["repo"] = repo.strip()
     except httpx.HTTPError as e:
+        st.session_state.pop("out", None)
         st.error(f"GitHub error: {e}")
+
+out = st.session_state.get("out")
+if out is not None:
+    if out.empty:
+        st.warning("No open, unassigned issues found.")
     else:
-        if out.empty:
-            st.warning("No open, unassigned issues found.")
-        else:
-            st.bar_chart(out.set_index("number")["score"])
-            st.dataframe(
-                out[SHOW],
-                column_config={"url": st.column_config.LinkColumn("link")},
-                hide_index=True,
-            )
-            st.subheader("Why these fit")
-            for _, r in out.head(5).iterrows():
-                with st.expander(f"#{r['number']} {r['title']}"):
-                    st.write(
-                        cached_explain(r["full_title"], r["body"])
-                        or "Explanation unavailable (set GROQ_API_KEY)."
-                    )
+        st.bar_chart(out.set_index("number")["score"])
+        st.dataframe(
+            out[SHOW],
+            column_config={"url": st.column_config.LinkColumn("link")},
+            hide_index=True,
+        )
+        st.subheader("Why these fit")
+        for _, r in out.head(5).iterrows():
+            with st.expander(f"#{r['number']} {r['title']}"):
+                st.write(
+                    cached_explain(r["full_title"], r["body"])
+                    or "Explanation unavailable (set GROQ_API_KEY)."
+                )
+                key = f"fb_{st.session_state['repo']}_{r['number']}"
+                st.caption("Is this a good starter issue?")
+                st.feedback(
+                    "thumbs",
+                    key=key,
+                    on_change=vote,
+                    args=(st.session_state["repo"], r["number"], r["score"], key),
+                )
