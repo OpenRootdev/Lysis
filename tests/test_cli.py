@@ -5,7 +5,12 @@ class FakeGH:
     def get(self, path, params=None):
         if path.endswith("/pulls"):
             return []
-        return {"full_name": "a/b", "license": None, "created_at": "2020-01-01T00:00:00Z"}
+        return {
+            "full_name": "a/b",
+            "license": None,
+            "language": "Python",
+            "created_at": "2020-01-01T00:00:00Z",
+        }
 
     def list_issues(self, owner, repo, state="open"):
         base = {
