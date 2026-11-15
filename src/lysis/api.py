@@ -6,6 +6,7 @@ from typing import Annotated, Any
 import httpx
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi.responses import RedirectResponse
 
 from lysis.cli import rank_repo
 from lysis.explain import explain_issue
@@ -34,6 +35,15 @@ def get_gh():
 def health():
     return {"status": "ok"}
 
+
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse("/docs")
+
+
+@app.get("/model")
+def model_info(m: Annotated[Any, Depends(get_model)]):
+    return m[1]
 
 @app.get("/model")
 def model_info(m: Annotated[Any, Depends(get_model)]):
