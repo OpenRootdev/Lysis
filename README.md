@@ -10,7 +10,8 @@ Labels like `good first issue` are often stale or wrong, so Lysis learns from wh
 2. **Label:** an issue is positive if a first-time contributor's PR closing it was merged.
 3. **Model:** gradient boosting on issue and repo features, evaluated with repo-grouped cross-validation.
 4. **Rank:** score open, unassigned issues, then decay by age so stale issues sink.
-
+5. **Explain:** an LLM (Groq) writes a short note for the top 5. It never changes the ranking.
+   
 ## Results
 
 5-fold repo-grouped CV on closed issues (base rate 0.10):
@@ -21,7 +22,7 @@ Labels like `good first issue` are often stale or wrong, so Lysis learns from wh
 | labels-only baseline | 0.195 | 0.746 |
 | gradient boosting | 0.26 | 0.795 |
 
-Per language, the gain is large on Python and small on JavaScript.
+Python: AP 0.296 vs 0.223 for labels-only. JavaScript: AP 0.169 vs 0.146 (smaller gain).
 Trained on Python and JavaScript repos (base rate 0.06).
 This is an early prototype. The model beats the baseline, but the signal is modest.
 
@@ -51,6 +52,7 @@ Rank issues:
 ```bash
 python src/lysis/cli.py psf/requests
 streamlit run src/lysis/app.py
+python src/lysis/cli.py psf/requests 5 --explain
 ```
 
 ## Project layout
