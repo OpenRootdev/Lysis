@@ -53,6 +53,12 @@ Rank issues:
 python src/lysis/cli.py psf/requests
 streamlit run src/lysis/app.py
 python src/lysis/cli.py psf/requests 5 --explain
+
+```
+
+```bash
+uvicorn lysis.api:app --reload        # API docs at /docs
+docker build -t lysis-api . && docker run -p 8000:8000 --env-file .env lysis-api
 ```
 
 ## Project layout
