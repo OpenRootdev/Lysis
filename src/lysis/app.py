@@ -40,8 +40,8 @@ top = st.slider("Top N", 5, 30, 10)
 def vote(repo_name, number, score, key):
     val = st.session_state.get(key)
     if val is not None:
-        log_feedback(repo_name, number, score, val == 1, meta["trained_at"][:10])
-
+        ok = log_feedback(repo_name, number, score, val == 1, meta["trained_at"][:10])
+        st.toast("Thanks, feedback saved." if ok else "Could not save feedback.")
 
 if st.button("Rank issues") and "/" in repo:
     try:
