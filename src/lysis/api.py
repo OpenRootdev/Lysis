@@ -45,11 +45,6 @@ def root():
 def model_info(m: Annotated[Any, Depends(get_model)]):
     return m[1]
 
-@app.get("/model")
-def model_info(m: Annotated[Any, Depends(get_model)]):
-    return m[1]
-
-
 @app.get("/rank")
 def rank(
     repo: Annotated[str, Query(pattern=REPO)],
