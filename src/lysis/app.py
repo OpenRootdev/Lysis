@@ -4,7 +4,8 @@ import httpx
 import streamlit as st
 from dotenv import load_dotenv
 
-from lysis.cli import rank_repo
+from lysis.cli import SHOW, rank_repo
+from lysis.explain import explain_issue
 from lysis.ingestion.github_client import GitHubClient
 from lysis.models.artifact import load_meta, load_model
 
@@ -12,10 +13,15 @@ load_dotenv()
 st.set_page_config(page_title="Lysis", page_icon="🧭")
 
 
+@st.cache_data(show_spinner=False)
+def cached_explain(title, body):
+    return explain_issue(title, body)
+
+
 @st.cache_resource
+
 def get_model():
     return load_model(), load_meta()
-
 
 ranker, meta = get_model()
 st.title("Lysis")
@@ -42,7 +48,14 @@ if st.button("Rank issues") and "/" in repo:
         else:
             st.bar_chart(out.set_index("number")["score"])
             st.dataframe(
-                out,
+                out[SHOW],
                 column_config={"url": st.column_config.LinkColumn("link")},
                 hide_index=True,
             )
+            st.subheader("Why these fit")
+            for _, r in out.head(5).iterrows():
+                with st.expander(f"#{r['number']} {r['title']}"):
+                    st.write(
+                        cached_explain(r["full_title"], r["body"])
+                        or "Explanation unavailable (set GROQ_API_KEY)."
+                    )
