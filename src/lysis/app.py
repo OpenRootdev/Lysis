@@ -1,32 +1,41 @@
 """Streamlit UI: streamlit run src\\lysis\\app.py"""
 
-import httpx
+import os
+
+import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 
-from lysis.cli import SHOW, rank_repo
-from lysis.explain import explain_issue
+from lysis.client import ApiError, fetch_model, fetch_rank
 from lysis.feedback import log_feedback
-from lysis.ingestion.github_client import GitHubClient
-from lysis.models.artifact import load_meta, load_model
 
 load_dotenv()
+API = os.getenv("LYSIS_API_URL", "https://lysis-3ocq.onrender.com")
 st.set_page_config(page_title="Lysis", page_icon="🧭")
 
 
-@st.cache_data(show_spinner=False)
-def cached_explain(title, body):
-    return explain_issue(title, body)
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_meta():
+    return fetch_model(API)
 
 
-@st.cache_resource
+def vote(repo_name, number, score, key, model_date):
+    val = st.session_state.get(key)
+    if val is not None:
+        ok = log_feedback(repo_name, number, score, val == 1, model_date)
+        st.toast("Thanks, feedback saved." if ok else "Could not save feedback.")
 
-def get_model():
-    return load_model(), load_meta()
 
-ranker, meta = get_model()
 st.title("Lysis")
 st.caption("Beginner-friendly GitHub issue ranker")
+
+try:
+    with st.spinner("Connecting to the Lysis API (the first request can take a minute)..."):
+        meta = get_meta()
+except ApiError as e:
+    st.error(str(e))
+    st.stop()
+
 st.sidebar.write(
     f"Model trained {meta['trained_at'][:10]} on {meta['n_train']:,} issues. "
     f"CV AP {meta['cv']['ap']}, AUC {meta['cv']['auc']}"
@@ -34,47 +43,40 @@ st.sidebar.write(
 if "importance" in meta:
     st.sidebar.subheader("What the model relies on")
     st.sidebar.bar_chart(meta["importance"])
+
 repo = st.text_input("Repository", "psf/requests", placeholder="owner/repo")
 top = st.slider("Top N", 5, 30, 10)
-
-def vote(repo_name, number, score, key):
-    val = st.session_state.get(key)
-    if val is not None:
-        ok = log_feedback(repo_name, number, score, val == 1, meta["trained_at"][:10])
-        st.toast("Thanks, feedback saved." if ok else "Could not save feedback.")
 
 if st.button("Rank issues") and "/" in repo:
     try:
         with st.spinner("Fetching and ranking..."):
-            st.session_state["out"] = rank_repo(GitHubClient(), repo.strip(), ranker, top)
-            st.session_state["repo"] = repo.strip()
-    except httpx.HTTPError as e:
-        st.session_state.pop("out", None)
-        st.error(f"GitHub error: {e}")
+            st.session_state["res"] = fetch_rank(API, repo.strip(), top)
+    except ApiError as e:
+        st.session_state.pop("res", None)
+        st.error(str(e))
 
-out = st.session_state.get("out")
-if out is not None:
-    if out.empty:
+res = st.session_state.get("res")
+if res is not None:
+    issues = res["issues"]
+    if not issues:
         st.warning("No open, unassigned issues found.")
     else:
+        out = pd.DataFrame(issues)
         st.bar_chart(out.set_index("number")["score"])
         st.dataframe(
-            out[SHOW],
+            out[["score", "number", "title", "url"]],
             column_config={"url": st.column_config.LinkColumn("link")},
             hide_index=True,
         )
         st.subheader("Why these fit")
-        for _, r in out.head(5).iterrows():
+        for r in issues[:5]:
             with st.expander(f"#{r['number']} {r['title']}"):
-                st.write(
-                    cached_explain(r["full_title"], r["body"])
-                    or "Explanation unavailable (set GROQ_API_KEY)."
-                )
-                key = f"fb_{st.session_state['repo']}_{r['number']}"
+                st.write(r.get("why") or "Explanation unavailable.")
+                key = f"fb_{res['repo']}_{r['number']}"
                 st.caption("Is this a good starter issue?")
                 st.feedback(
                     "thumbs",
                     key=key,
                     on_change=vote,
-                    args=(st.session_state["repo"], r["number"], r["score"], key),
+                    args=(res["repo"], r["number"], r["score"], key, res["model_date"]),
                 )
