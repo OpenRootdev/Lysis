@@ -21,6 +21,7 @@ Labels like `good first issue` are often stale or wrong, so Lysis learns from wh
 | labels-only baseline | 0.195 | 0.746 |
 | gradient boosting | 0.26 | 0.795 |
 
+Per language, the gain is large on Python and small on JavaScript.
 Trained on Python and JavaScript repos (base rate 0.06).
 This is an early prototype. The model beats the baseline, but the signal is modest.
 
