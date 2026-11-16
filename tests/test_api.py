@@ -1,7 +1,9 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from lysis import api as api_module
 from lysis.api import app, get_gh, get_model
+from lysis.limits import SlidingWindow
 
 
 class FakeGH:
@@ -28,6 +30,11 @@ class FakeGH:
             {**base, "number": 1, "title": "one"},
             {**base, "number": 2, "title": "two", "labels": [{"name": "good first issue"}]},
         ]
+    
+    api_module.PER_IP.hits.clear()
+    api_module.GLOBAL.hits.clear()
+    api_module.CACHE.data.clear()
+
 
 
 @pytest.fixture
@@ -56,3 +63,20 @@ def test_rank(api):
 
 def test_rank_rejects_bad_repo(api):
     assert api.get("/rank", params={"repo": "nonsense"}).status_code == 422
+    
+    
+def test_rank_is_cached(api):
+    calls = []
+    app.dependency_overrides[get_model] = lambda: (
+        lambda df: calls.append(1) or df["labels"].apply(len),
+        {"trained_at": "2026-11-14T00:00:00+00:00"},
+    )
+    for _ in range(2):
+        assert api.get("/rank", params={"repo": "a/b"}).status_code == 200
+    assert len(calls) == 1
+
+
+def test_per_ip_limit(api, monkeypatch):
+    monkeypatch.setattr(api_module, "PER_IP", SlidingWindow(2))
+    codes = [api.get("/rank", params={"repo": "a/b"}).status_code for _ in range(3)]
+    assert codes == [200, 200, 429]
