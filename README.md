@@ -7,6 +7,9 @@ Beginner-friendly GitHub issue ranker. Give it a repo and it ranks the open issu
 
 Labels like `good first issue` are often stale or wrong, so Lysis learns from what actually happened: issues that first-time contributors really closed.
 
+**Live demo:** https://lysis-alpha.vercel.app · [API docs](https://lysis-3ocq.onrender.com/docs) · [legacy Streamlit demo](https://mcx78yh52appm5botjqrh52.streamlit.app/)
+
+
 ## How it works
 
 1. **Ingest:** fetch repos, issues and merged PRs from the GitHub API (ETag-cached).
@@ -14,6 +17,38 @@ Labels like `good first issue` are often stale or wrong, so Lysis learns from wh
 3. **Model:** gradient boosting on issue and repo features, evaluated with repo-grouped cross-validation.
 4. **Rank:** score open, unassigned issues, then decay by age so stale issues sink.
 5. **Explain:** an LLM (Groq) writes a short note for the top 5. It never changes the ranking.
+
+
+## Architecture
+
+```mermaid
+flowchart LR
+  B[Browser] --> W[Next.js on Vercel]
+  W -->|GET /rank, POST /feedback| A[FastAPI on Render]
+  A -->|issues and PRs| G[GitHub API]
+  A --> M[(models/gbm.joblib)]
+  A -->|explanations| L[Groq]
+  A -->|votes| S[(Supabase)]
+  C[Weekly GitHub Action] -->|fetch, label, train| M
+```
+
+The frontend is a thin client. The API owns the model, the GitHub and Groq keys, and all database writes.
+
+## API
+
+| Endpoint | Description |
+|---|---|
+| `GET /rank?repo=owner/name&top=10&explain=true` | Ranked open issues, with short explanations for the top 5 |
+| `GET /model` | Model metadata (training date, size, CV metrics, feature importance) |
+| `POST /feedback` | Records a 👍/👎 on a recommendation |
+| `GET /health` | Liveness check |
+
+Rate limits: 30 `/rank` requests per IP per hour, with a global cap and a 10-minute response cache.
+
+```bash
+curl "https://lysis-3ocq.onrender.com/rank?repo=psf/requests&top=3"
+```
+
 
 ## Results
 
@@ -66,6 +101,21 @@ python -m lysis.cli psf/requests
 python -m lysis.cli psf/requests 5 --explain
 streamlit run src/lysis/app.py
 ```
+
+```bash
+uvicorn lysis.api:app --reload          # http://127.0.0.1:8000
+cd web && npm install && npm run dev    # http://localhost:3000
+```
+
+Configuration (all optional for local use):
+
+| Variable | Used by | Purpose |
+|---|---|---|
+| `GITHUB_TOKEN` | API, scripts | Read-only token for the GitHub API |
+| `GROQ_API_KEY`, `GROQ_MODEL` | API | Explanations |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | API | Feedback storage |
+| `CORS_ORIGINS` | API | Comma-separated allowed frontend origins |
+| `NEXT_PUBLIC_API_URL` | web | API base URL |
 
 ### API
 
