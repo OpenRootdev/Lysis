@@ -1,5 +1,8 @@
 # Lysis
 
+[![CI](https://github.com/OpenRootdev/Lysis/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenRootdev/Lysis/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 Beginner-friendly GitHub issue ranker. Give it a repo and it ranks the open issues by how likely a first-time contributor is to get a PR merged for them.
 
 Labels like `good first issue` are often stale or wrong, so Lysis learns from what actually happened: issues that first-time contributors really closed.
@@ -7,58 +10,69 @@ Labels like `good first issue` are often stale or wrong, so Lysis learns from wh
 ## How it works
 
 1. **Ingest:** fetch repos, issues and merged PRs from the GitHub API (ETag-cached).
-2. **Label:** an issue is positive if a first-time contributor's PR closing it was merged.
+2. **Label:** an issue is positive if a first-time contributor's PR closing it was merged. See [docs/labels.md](docs/labels.md).
 3. **Model:** gradient boosting on issue and repo features, evaluated with repo-grouped cross-validation.
 4. **Rank:** score open, unassigned issues, then decay by age so stale issues sink.
 5. **Explain:** an LLM (Groq) writes a short note for the top 5. It never changes the ranking.
-   
+
 ## Results
 
 5-fold repo-grouped CV on closed issues (base rate 0.10):
 
 | Ranker | AP | AUC |
 |---|---|---|
-| random | ~0.10 | 0.50 |
-| labels-only baseline | 0.195 | 0.746 |
-| gradient boosting | 0.26 | 0.795 |
+| Random | ~0.10 | 0.50 |
+| Labels-only baseline | 0.195 | 0.746 |
+| Gradient boosting | 0.26 | 0.795 |
 
-Python: AP 0.296 vs 0.223 for labels-only. JavaScript: AP 0.169 vs 0.146 (smaller gain).
-Trained on Python and JavaScript repos (base rate 0.06).
+Per language, AP against labels-only: Python 0.296 vs 0.223, JavaScript 0.169 vs 0.146.
+
 This is an early prototype. The model beats the baseline, but the signal is modest.
 
 ## Quick start
 
-
-```bash
+```powershell
 git clone https://github.com/OpenRootdev/Lysis.git
 cd Lysis
 python -m venv .venv
-.venv\Scripts\activate        # Windows (macOS/Linux: source .venv/bin/activate)
+.venv\Scripts\activate          # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env          # add a read-only GITHUB_TOKEN
+pip install -e .
+copy .env.example .env          # macOS/Linux: cp .env.example .env
 ```
 
-Build the dataset (once, takes a while, cached):
+Edit `.env`:
 
-```bash
-python src/lysis/ingestion/fetch.py
-python src/lysis/features/labels.py
-python src/lysis/models/evaluate.py
-python src/lysis/ingestion/fetch.py --language javascript   # default: python
+| Variable | Required | Purpose |
+|---|---|---|
+| `GITHUB_TOKEN` | Yes | Read-only, public-repo token |
+| `GROQ_API_KEY` | No | Enables issue explanations |
+
+### Build the dataset
+
+Run once. It takes a while, and responses are cached.
+
+```powershell
+python -m lysis.ingestion.fetch                        # Python (default)
+python -m lysis.ingestion.fetch --language javascript
+python -m lysis.features.labels
+python -m lysis.models.evaluate
 ```
 
-Rank issues:
+### Rank issues
 
-```bash
-python src/lysis/cli.py psf/requests
+```powershell
+python -m lysis.cli psf/requests
+python -m lysis.cli psf/requests 5 --explain
 streamlit run src/lysis/app.py
-python src/lysis/cli.py psf/requests 5 --explain
-
 ```
 
-```bash
-uvicorn lysis.api:app --reload        # API docs at /docs
-docker build -t lysis-api . && docker run -p 8000:8000 --env-file .env lysis-api
+### API
+
+```powershell
+uvicorn lysis.api:app --reload      # docs at http://localhost:8000/docs
+docker build -t lysis-api .
+docker run -p 8000:8000 --env-file .env lysis-api
 ```
 
 ## Project layout
@@ -70,14 +84,31 @@ src/lysis/
   models/      baseline, gradient boosting, evaluation
   cli.py       command line ranking
   app.py       Streamlit UI
+  api.py       FastAPI service
 tests/
+docs/
 ```
+
+## Development
+
+```powershell
+ruff check .
+pytest
+```
+
+CI runs both on every push and pull request. Changes to `main` go through a PR.
 
 ## Known limitations
 
-- Only Python repos so far.
+- Trained on Python and JavaScript repos only.
 - Labels depend on PRs linking issues with `closes #N`.
+- A positive label means "a newcomer resolved it", which approximates beginner-friendly but is not the same thing.
+- Issues no newcomer has attempted are never labeled positive.
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Look for issues labeled `good first issue`.
+
+## License
+
+[MIT](LICENSE)
