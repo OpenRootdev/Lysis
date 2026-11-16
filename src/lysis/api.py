@@ -9,9 +9,11 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel, Field
 
 from lysis.cli import rank_repo
 from lysis.explain import explain_issue
+from lysis.feedback import log_feedback
 from lysis.ingestion.github_client import GitHubClient, RateLimitError
 from lysis.limits import SlidingWindow, TTLCache
 from lysis.models.artifact import load_meta, load_model
@@ -26,13 +28,22 @@ ORIGINS = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ORIGINS,
-    allow_methods=["GET", "HEAD"],
+    allow_methods=["GET", "HEAD", "POST"],
     allow_headers=["*"],
 )
 REPO = r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
 PER_IP = SlidingWindow(int(os.getenv("RATE_PER_IP", "30")))
 GLOBAL = SlidingWindow(int(os.getenv("RATE_GLOBAL", "300")))
 CACHE = TTLCache(ttl=600)
+FEEDBACK = SlidingWindow(int(os.getenv("RATE_FEEDBACK", "60")))
+
+
+class Vote(BaseModel):
+    repo: str = Field(pattern=REPO)
+    issue_number: int = Field(ge=1)
+    score: float = Field(ge=0, le=1)
+    helpful: bool
+    model_date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
 
 
 def client_ip(request: Request):
@@ -49,7 +60,12 @@ def limit_ip(request: Request):
             429, "Too many requests, try again later.", headers={"Retry-After": "60"}
         )
 
-
+def limit_feedback(request: Request):
+    if not FEEDBACK.allow(client_ip(request)):
+        raise HTTPException(
+            429, "Too many votes, try again later.", headers={"Retry-After": "60"}
+        )
+        
 @lru_cache(maxsize=1)
 def _model():
     return load_model(), load_meta()
@@ -110,3 +126,12 @@ def rank(
     result = {"repo": repo, "model_date": m[1]["trained_at"][:10], "issues": rows}
     CACHE.set(key, result)
     return result
+
+@app.post("/feedback", status_code=201, dependencies=[Depends(limit_feedback)])
+def feedback(vote: Vote):
+    ok = log_feedback(
+        vote.repo, vote.issue_number, vote.score, vote.helpful, vote.model_date
+    )
+    if not ok:
+        raise HTTPException(502, "Could not save feedback")
+    return {"saved": True}
