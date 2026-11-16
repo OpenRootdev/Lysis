@@ -80,3 +80,36 @@ def test_per_ip_limit(api, monkeypatch):
     monkeypatch.setattr(api_module, "PER_IP", SlidingWindow(2))
     codes = [api.get("/rank", params={"repo": "a/b"}).status_code for _ in range(3)]
     assert codes == [200, 200, 429]
+
+def test_cors_allows_local_frontend(api):
+    r = api.get("/health", headers={"Origin": "http://localhost:3000"})
+    assert r.headers["access-control-allow-origin"] == "http://localhost:3000"
+    
+    
+def vote_body(**kw):
+    return {
+        "repo": "a/b",
+        "issue_number": 5,
+        "score": 0.3,
+        "helpful": True,
+        "model_date": "2026-11-14",
+        **kw,
+    }
+
+
+def test_feedback_saved(api, monkeypatch):
+    seen = []
+    monkeypatch.setattr(api_module, "log_feedback", lambda *a: seen.append(a) or True)
+    r = api.post("/feedback", json=vote_body())
+    assert r.status_code == 201
+    assert seen == [("a/b", 5, 0.3, True, "2026-11-14")]
+
+
+def test_feedback_rejects_bad_input(api):
+    assert api.post("/feedback", json=vote_body(repo="nonsense")).status_code == 422
+    assert api.post("/feedback", json=vote_body(score=5)).status_code == 422
+
+
+def test_feedback_failure_is_502(api, monkeypatch):
+    monkeypatch.setattr(api_module, "log_feedback", lambda *a: False)
+    assert api.post("/feedback", json=vote_body()).status_code == 502
