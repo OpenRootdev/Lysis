@@ -80,3 +80,7 @@ def test_per_ip_limit(api, monkeypatch):
     monkeypatch.setattr(api_module, "PER_IP", SlidingWindow(2))
     codes = [api.get("/rank", params={"repo": "a/b"}).status_code for _ in range(3)]
     assert codes == [200, 200, 429]
+
+def test_cors_allows_local_frontend(api):
+    r = api.get("/health", headers={"Origin": "http://localhost:3000"})
+    assert r.headers["access-control-allow-origin"] == "http://localhost:3000"

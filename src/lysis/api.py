@@ -7,6 +7,7 @@ from typing import Annotated, Any
 import httpx
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from lysis.cli import rank_repo
@@ -17,6 +18,17 @@ from lysis.models.artifact import load_meta, load_model
 
 load_dotenv()
 app = FastAPI(title="Lysis", version="0.1.0")
+ORIGINS = [
+    o.strip()
+    for o in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+    if o.strip()
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ORIGINS,
+    allow_methods=["GET", "HEAD"],
+    allow_headers=["*"],
+)
 REPO = r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
 PER_IP = SlidingWindow(int(os.getenv("RATE_PER_IP", "30")))
 GLOBAL = SlidingWindow(int(os.getenv("RATE_GLOBAL", "300")))
