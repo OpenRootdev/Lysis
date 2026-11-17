@@ -20,7 +20,7 @@ jobs:
           python-version: "3.13"
           cache: pip
       - run: pip install -r requirements.txt
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v6
         with:
           path: data
           key: lysis-data-${{ github.run_id }}
@@ -33,7 +33,7 @@ jobs:
         with:
           name: model
           path: models/
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@v6
         if: always()
         with:
           path: data
