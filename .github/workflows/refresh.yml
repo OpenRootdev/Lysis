@@ -29,7 +29,7 @@ jobs:
       - run: python src/lysis/ingestion/fetch.py --language javascript
       - run: python src/lysis/features/labels.py
       - run: python src/lysis/models/train.py
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: model
           path: models/
