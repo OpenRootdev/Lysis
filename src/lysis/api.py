@@ -2,7 +2,7 @@
 
 import os
 from functools import lru_cache
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 import httpx
 from dotenv import load_dotenv
@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 
+from lysis.catalog import load_catalog
 from lysis.cli import rank_repo
 from lysis.explain import explain_issue
 from lysis.feedback import log_feedback
@@ -36,6 +37,7 @@ PER_IP = SlidingWindow(int(os.getenv("RATE_PER_IP", "30")))
 GLOBAL = SlidingWindow(int(os.getenv("RATE_GLOBAL", "300")))
 CACHE = TTLCache(ttl=600)
 FEEDBACK = SlidingWindow(int(os.getenv("RATE_FEEDBACK", "60")))
+REPOS = SlidingWindow(int(os.getenv("RATE_REPOS", "120")))
 
 
 class Vote(BaseModel):
@@ -65,6 +67,24 @@ def limit_feedback(request: Request):
         raise HTTPException(
             429, "Too many votes, try again later.", headers={"Retry-After": "60"}
         )
+
+def limit_repos(request: Request):
+    if not REPOS.allow(client_ip(request)):
+        raise HTTPException(
+            429, "Too many requests, try again later.", headers={"Retry-After": "60"}
+        )
+
+
+@lru_cache(maxsize=1)
+def _catalog():
+    return load_catalog()
+
+
+def get_catalog():
+    try:
+        return _catalog()
+    except FileNotFoundError as e:
+        raise HTTPException(503, "Catalog not available") from e
         
 @lru_cache(maxsize=1)
 def _model():
@@ -135,3 +155,27 @@ def feedback(vote: Vote):
     if not ok:
         raise HTTPException(502, "Could not save feedback")
     return {"saved": True}
+
+
+@app.get("/repos/meta", dependencies=[Depends(limit_repos)])
+def repos_meta(cat: Annotated[Any, Depends(get_catalog)]):
+    langs = sorted({r["language"] for r in cat["repos"] if r["language"]})
+    return {**cat["meta"], "languages": langs, "levels": ["beginner", "intermediate", "advanced"]}
+
+
+@app.get("/repos", dependencies=[Depends(limit_repos)])
+def repos(
+    cat: Annotated[Any, Depends(get_catalog)],
+    language: Annotated[str | None, Query(pattern=r"^[a-z0-9+#.-]{1,30}$")] = None,
+    level: Literal["beginner", "intermediate", "advanced"] | None = None,
+    top: Annotated[int, Query(ge=1, le=50)] = 20,
+    active_only: bool = True,
+):
+    rows = [
+        r
+        for r in cat["repos"]
+        if (language is None or r["language"] == language)
+        and (level is None or r["level"] == level)
+        and (r["active"] or not active_only)
+    ]
+    return {"model_date": cat["meta"]["model_date"], "total": len(rows), "repos": rows[:top]}

@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from lysis import api as api_module
-from lysis.api import app, get_gh, get_model
+from lysis.api import app, get_catalog, get_gh, get_model
 from lysis.limits import SlidingWindow
 
 
@@ -113,3 +113,49 @@ def test_feedback_rejects_bad_input(api):
 def test_feedback_failure_is_502(api, monkeypatch):
     monkeypatch.setattr(api_module, "log_feedback", lambda *a: False)
     assert api.post("/feedback", json=vote_body()).status_code == 502
+
+
+CATALOG = {
+    "meta": {
+        "built_at": "2026-11-17T00:00:00+00:00",
+        "model_date": "2026-11-14",
+        "n_repos": 4,
+        "thresholds": {},
+    },
+    "repos": [
+        {"repo": "a/one", "language": "python", "level": "beginner", "active": True},
+        {"repo": "a/two", "language": "python", "level": "advanced", "active": True},
+        {"repo": "a/three", "language": "javascript", "level": "beginner", "active": True},
+        {"repo": "a/four", "language": "python", "level": "beginner", "active": False},
+    ],
+}
+
+
+@pytest.fixture
+def cat_api():
+    api_module.REPOS.hits.clear()
+    app.dependency_overrides[get_catalog] = lambda: CATALOG
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+
+
+def test_repos_filters(cat_api):
+    r = cat_api.get("/repos", params={"language": "python", "level": "beginner"}).json()
+    assert [x["repo"] for x in r["repos"]] == ["a/one"]
+    assert r["total"] == 1
+
+
+def test_repos_include_inactive(cat_api):
+    params = {"language": "python", "level": "beginner", "active_only": "false"}
+    r = cat_api.get("/repos", params=params).json()
+    assert [x["repo"] for x in r["repos"]] == ["a/one", "a/four"]
+
+
+def test_repos_top_and_validation(cat_api):
+    assert len(cat_api.get("/repos", params={"top": 1}).json()["repos"]) == 1
+    assert cat_api.get("/repos", params={"level": "expert"}).status_code == 422
+
+
+def test_repos_meta(cat_api):
+    m = cat_api.get("/repos/meta").json()
+    assert m["languages"] == ["javascript", "python"] and m["n_repos"] == 4
