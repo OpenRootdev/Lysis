@@ -35,6 +35,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!res.ok) {
     if (res.status === 422) throw new Error("Enter a repository as owner/name.");
     if (res.status === 404) throw new Error("Repository not found.");
+    if (res.status === 429) throw new Error("Rate limit reached (30/hour). Try again later.");
     let detail = "";
     try {
       const body = await res.json();
