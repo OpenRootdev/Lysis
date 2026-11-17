@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 
 import { API, getModel, rank, sendVote, type Issue, type ModelMeta, type RankResponse } from "@/lib/api";
+import RepoFinder from "@/components/RepoFinder";
 
 const EXAMPLES = ["psf/requests", "pallets/flask", "expressjs/express"];
 
@@ -32,9 +33,8 @@ export default function Home() {
       .catch(() => setMeta(null));
   }, []);
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    const name = parseRepo(repo);
+   async function run(input: string) {
+    const name = parseRepo(input);
     if (!/^[\w.-]+\/[\w.-]+$/.test(name)) {
       setError("Enter a repository as owner/name, for example psf/requests.");
       return;
@@ -54,6 +54,11 @@ export default function Home() {
       clearTimeout(timer);
       setLoading(false);
     }
+  }
+
+  function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    void run(repo);
   }
 
   async function vote(issue: Issue, up: boolean) {
@@ -97,8 +102,14 @@ export default function Home() {
           get a PR merged, learned from thousands of real outcomes instead of labels.
         </p>
       </header>
+        <RepoFinder
+        onPick={(name) => {
+          void run(name);
+          document.getElementById("rank")?.scrollIntoView({ behavior: "smooth" });
+        }}
+      />
 
-      <form onSubmit={onSubmit} className="mt-10 flex flex-col gap-3 sm:flex-row">
+      <form id="rank" onSubmit={onSubmit} className="mt-10 flex flex-col gap-3 sm:flex-row" >
         <div className="flex flex-1 items-center rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 focus-within:border-emerald-500/60">
           <span className="font-mono text-sm text-zinc-500">github.com/</span>
           <input
