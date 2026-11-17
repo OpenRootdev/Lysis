@@ -59,3 +59,35 @@ export const sendVote = (vote: Vote) =>
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(vote),
   });
+
+
+export type RepoItem = {
+  repo: string;
+  url: string;
+  description: string;
+  language: string;
+  stars: number;
+  size_kb: number;
+  open_issues: number;
+  good_first_issues: number;
+  prs_90d: number;
+  score: number;
+  level: "beginner" | "intermediate" | "advanced";
+  active: boolean;
+};
+
+export type ReposResponse = { model_date: string; total: number; repos: RepoItem[] };
+
+export type ReposMeta = {
+  built_at: string;
+  model_date: string;
+  n_repos: number;
+  languages: string[];
+};
+
+export const getReposMeta = () => request<ReposMeta>("/repos/meta");
+
+export const getRepos = (language: string, level: string, top = 12) =>
+  request<ReposResponse>(
+    `/repos?language=${encodeURIComponent(language)}&level=${level}&top=${top}`,
+  );
