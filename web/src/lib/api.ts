@@ -91,3 +91,13 @@ export const getRepos = (language: string, level: string, top = 12) =>
   request<ReposResponse>(
     `/repos?language=${encodeURIComponent(language)}&level=${level}&top=${top}`,
   );
+
+export function parseRepo(input: string): string {
+  return input
+    .trim()
+    .replace(/^https?:\/\/(www\.)?github\.com\//i, "")
+    .replace(/\.git$/i, "")
+    .split("/")
+    .slice(0, 2)
+    .join("/");
+}
