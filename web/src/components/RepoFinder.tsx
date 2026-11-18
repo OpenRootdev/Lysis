@@ -1,6 +1,6 @@
 
 "use client";
-
+import { logActivity } from "@/lib/activity";
 import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 
 import {
@@ -311,6 +311,7 @@ export default function RepoFinder({
                   >
                     <a
                       href={r.url}
+                      onClick={() => void logActivity({ kind: "open", repo: r.repo })}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="font-medium text-zinc-100 hover:text-emerald-400"

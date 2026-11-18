@@ -15,6 +15,9 @@ import {
 } from "@/lib/api";
 
 import RepoFinder from "@/components/RepoFinder";
+import AuthButton from "@/components/AuthButton";
+import HistoryButton from "@/components/HistoryButton";
+import { logActivity } from "@/lib/activity";
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
@@ -45,7 +48,9 @@ export default function Home() {
     const timer = setTimeout(() => setSlow(true), 4000);
 
     try {
-      setData(await rank(name, 10));
+      const res = await rank(name, 10);
+      setData(res);
+      void logActivity({ kind: "rank", repo: res.repo });
       setVotes({});
     } catch (err) {
       setData(null);
@@ -62,6 +67,13 @@ export default function Home() {
     const key = `${data.repo}#${issue.number}`;
 
     setVotes((v) => ({ ...v, [key]: up ? "up" : "down" }));
+
+    void logActivity({
+      kind: "vote",
+      repo: data.repo,
+      issue_number: issue.number,
+      helpful: up,
+    });
 
     try {
       await sendVote({
@@ -89,11 +101,17 @@ export default function Home() {
   return (
     <main className="app-shell mx-auto flex w-full max-w-5xl flex-col px-4 pb-4 pt-6 sm:px-5 sm:pt-8">
       <header className="shrink-0">
-        <div className="flex items-center gap-2 font-mono text-sm text-emerald-400">
-          <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
-          lysis
-          <span className="text-zinc-600">/</span>
-          <span className="text-zinc-500">v0.1</span>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 font-mono text-sm text-emerald-400">
+            <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
+            lysis
+            <span className="text-zinc-600">/</span>
+            <span className="text-zinc-500">v0.1</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <HistoryButton />
+            <AuthButton />
+          </div>
         </div>
 
         <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-50 sm:text-3xl lg:text-4xl">
@@ -160,6 +178,13 @@ export default function Home() {
                           <div className="min-w-0 flex-1">
                             <a
                               href={issue.url}
+                              onClick={() =>
+                                void logActivity({
+                                  kind: "open",
+                                  repo: data.repo,
+                                  issue_number: issue.number,
+                                })
+                              }
                               target="_blank"
                               rel="noopener noreferrer"
                               className="font-medium text-zinc-100 hover:text-emerald-400"
