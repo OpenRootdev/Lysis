@@ -51,3 +51,9 @@ def test_get_retries_on_network_error(tmp_path, monkeypatch):
     http = httpx.Client(transport=httpx.MockTransport(handler), base_url="https://api.github.com")
     gh = GitHubClient(token="x", cache_dir=tmp_path, client=http)
     assert gh.get("/x") == {"ok": 1}
+    
+def test_retries_on_502(tmp_path, monkeypatch):
+    monkeypatch.setattr("time.sleep", lambda s: None)
+    responses = [httpx.Response(502), httpx.Response(200, json=[{"number": 3}])]
+    gh = make_client(lambda request: responses.pop(0), tmp_path)
+    assert gh.get("/x") == [{"number": 3}]

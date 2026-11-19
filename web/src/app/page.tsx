@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { safeGithubUrl } from "@/lib/safeUrl";
 
 import {
   API,
@@ -182,7 +183,7 @@ export default function Home() {
 
                           <div className="min-w-0 flex-1">
                             <a
-                              href={issue.url}
+                              href={safeGithubUrl(issue.url)}
                               onClick={() =>
                                 void logActivity({
                                   kind: "open",
