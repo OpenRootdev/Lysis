@@ -1,6 +1,6 @@
 import httpx
 
-from lysis.ingestion.fetch import discover
+from lysis.ingestion.fetch import discover, fetch_repo
 from lysis.ingestion.github_client import GitHubClient
 
 
@@ -23,3 +23,17 @@ def test_discover_uses_language(tmp_path):
     gh = GitHubClient(token="x", cache_dir=tmp_path, client=http)
     discover(gh, language="javascript")
     assert len(seen) == 3 and all('language:"javascript"' in q for q in seen)
+    
+def test_fetch_repo_catalog_only_skips_closed():
+    calls = []
+
+    class GH:
+        def get(self, path, params=None):
+            return []
+
+        def list_issues(self, owner, repo, state="open"):
+            calls.append(state)
+            return []
+
+    out = fetch_repo(GH(), "a/b", catalog_only=True)
+    assert calls == ["open"] and out["closed_issues"] == []

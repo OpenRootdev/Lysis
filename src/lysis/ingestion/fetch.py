@@ -1,3 +1,4 @@
+
 """Discover Python repos and save raw issues/PRs to data/raw/."""
 
 import argparse
@@ -17,20 +18,36 @@ OUT = Path("data/raw")
 def discover(gh, per_band=100, language="python"):
     since = (date.today() - timedelta(days=90)).isoformat()
     repos = []
+
     for band in BANDS:
-        q = f'language:"{language}" stars:{band} pushed:>{since} good-first-issues:>2 archived:false'
-        data = gh.get("/search/repositories", {"q": q, "sort": "updated", "per_page": per_band})
+        q = (
+            f'language:"{language}" stars:{band} '
+            f'pushed:>{since} good-first-issues:>2 archived:false'
+        )
+        data = gh.get(
+            "/search/repositories",
+            {"q": q, "sort": "updated", "per_page": per_band},
+        )
         repos += [r["full_name"] for r in data["items"]]
+
     return repos
 
 
-def fetch_repo(gh, full_name):
+def fetch_repo(gh, full_name, catalog_only=False):
     owner, repo = full_name.split("/")
-    prs = gh.get(f"/repos/{full_name}/pulls", {"state": "closed", "per_page": 100})
+
+    prs = gh.get(
+        f"/repos/{full_name}/pulls",
+        {"state": "closed", "per_page": 100},
+    )
+
     return {
         "repo": gh.get(f"/repos/{full_name}"),
         "open_issues": gh.list_issues(owner, repo, state="open"),
-        "closed_issues": gh.list_issues(owner, repo, state="closed"),
+        "closed_issues": (
+            [] if catalog_only
+            else gh.list_issues(owner, repo, state="closed")
+        ),
         "merged_prs": [p for p in prs if p.get("merged_at")],
     }
 
@@ -38,20 +55,31 @@ def fetch_repo(gh, full_name):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--language", default="python")
+    parser.add_argument("--catalog-only", action="store_true")
+
     args = parser.parse_args()
+
     load_dotenv()
     gh = GitHubClient()
+
     OUT.mkdir(parents=True, exist_ok=True)
+
     for name in discover(gh, language=args.language):
         path = OUT / f"{name.replace('/', '__')}.json"
+
         if path.exists():
             continue
+
         try:
-            path.write_text(json.dumps(fetch_repo(gh, name)))
+            path.write_text(
+                json.dumps(fetch_repo(gh, name, args.catalog_only))
+            )
         except httpx.HTTPError as e:
             print("skipped", name, e)
             continue
+
         print("saved", name)
+
 
 if __name__ == "__main__":
     main()

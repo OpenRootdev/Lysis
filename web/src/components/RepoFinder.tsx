@@ -319,6 +319,15 @@ export default function RepoFinder({
                       {r.repo}
                     </a>
 
+                     {!r.validated && (
+                      <span
+                        title="The model was trained on Python and JavaScript. Scores for this language are untested."
+                        className="ml-2 rounded border border-zinc-700 px-1.5 py-0.5 font-mono text-[10px] text-zinc-500"
+                      >
+                        unvalidated
+                      </span>
+                  )}
+
                     <p className="mt-1 line-clamp-2 text-xs text-zinc-400 sm:text-sm">
                       {r.description || "No description."}
                     </p>
