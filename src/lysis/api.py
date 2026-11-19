@@ -133,7 +133,9 @@ def rank(
     try:
         out = rank_repo(gh, repo, m[0], top)
     except RateLimitError as e:
-        raise HTTPException(429, str(e)) from e
+        raise HTTPException(
+            429, "GitHub rate limit reached, try again later.", headers={"Retry-After": "300"}
+        ) from e
     except httpx.HTTPStatusError as e:
         code = 404 if e.response.status_code == 404 else 502
         raise HTTPException(code, f"GitHub error {e.response.status_code}") from e

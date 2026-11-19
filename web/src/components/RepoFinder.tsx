@@ -2,6 +2,7 @@
 "use client";
 import { logActivity } from "@/lib/activity";
 import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
+import { safeGithubUrl } from "@/lib/safeUrl";
 
 import {
   getRepos,
@@ -310,7 +311,7 @@ export default function RepoFinder({
                     style={{ animationDelay: `${Math.min(i, 8) * 30}ms` }}
                   >
                     <a
-                      href={r.url}
+                      href={safeGithubUrl(r.url)}
                       onClick={() => void logActivity({ kind: "open", repo: r.repo })}
                       target="_blank"
                       rel="noopener noreferrer"

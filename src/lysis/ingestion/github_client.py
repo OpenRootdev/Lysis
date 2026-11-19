@@ -50,7 +50,7 @@ class GitHubClient:
             raise RateLimitError(f"Rate limited; reset in {int(wait)}s")
         time.sleep(max(wait, 0))
 
-    def get(self, path, params=None, retries=5):
+    def get(self, path, params=None, retries=6):
         cache_file = self._cache_file(path, params)
         cached = json.loads(cache_file.read_text()) if cache_file.exists() else None
         headers = {"If-None-Match": cached["etag"]} if cached else {}
@@ -63,6 +63,9 @@ class GitHubClient:
             if self._limited(resp):
                 self._wait(resp)
                 continue
+            if resp.status_code >= 500:
+                time.sleep(2 ** attempt)
+                continue
             if resp.status_code == 304 and cached:
                 return cached["body"]
             resp.raise_for_status()
@@ -70,7 +73,7 @@ class GitHubClient:
             if etag := resp.headers.get("ETag"):
                 cache_file.write_text(json.dumps({"etag": etag, "body": body}))
             return body
-        raise RateLimitError("Still rate limited after retries")
+        raise RateLimitError("GitHub request failed after retries (rate limit or server error)")
 
     def list_issues(self, owner, repo, labels=None, max_pages=3, state="open"):
         """Issues for a repo, excluding pull requests."""

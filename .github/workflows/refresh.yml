@@ -25,10 +25,10 @@ jobs:
           path: data
           key: lysis-data-${{ github.run_id }}
           restore-keys: lysis-data-
-      - run: python src/lysis/ingestion/fetch.py
-      - run: python src/lysis/ingestion/fetch.py --language javascript
+      - run: python src/lysis/ingestion/fetch.py --language all --refresh-days 7
       - run: python src/lysis/features/labels.py
       - run: python src/lysis/models/train.py
+      - run: python src/lysis/catalog.py
       - uses: actions/upload-artifact@v4
         with:
           name: model

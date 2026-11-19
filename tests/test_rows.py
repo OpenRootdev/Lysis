@@ -1,4 +1,4 @@
-from lysis.features.rows import merged_times, pr_activity
+from lysis.features.rows import merged_times, norm_labels, pr_activity
 
 
 def test_pr_activity_uses_only_past_prs():
@@ -11,3 +11,8 @@ def test_pr_activity_uses_only_past_prs():
     )
     out = pr_activity(merged, "2026-02-01T00:00:00Z")
     assert out == {"prs_90d": 1, "merge_gap_days": 31}
+    
+def test_norm_labels():
+    out = norm_labels([{"name": "E-easy"}, {"name": "Help-Wanted"}, {"name": "bug"}])
+    assert "good first issue" in out and "help wanted" in out and "bug" in out
+    assert norm_labels([{"name": "good first issue"}]).count("good first issue") == 1
