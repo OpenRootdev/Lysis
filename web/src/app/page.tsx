@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -14,6 +13,7 @@ import {
   type RankResponse,
 } from "@/lib/api";
 
+import Image from "next/image";
 import RepoFinder from "@/components/RepoFinder";
 import AuthButton from "@/components/AuthButton";
 import HistoryButton from "@/components/HistoryButton";
@@ -94,16 +94,21 @@ export default function Home() {
     }
   }
 
-  const max = data
-    ? Math.max(...data.issues.map((i) => i.score), 0.0001)
-    : 1;
+  const max = data ? Math.max(...data.issues.map((i) => i.score), 0.0001) : 1;
 
   return (
     <main className="app-shell mx-auto flex w-full max-w-5xl flex-col px-4 pb-4 pt-6 sm:px-5 sm:pt-8">
       <header className="shrink-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 font-mono text-sm text-emerald-400">
-            <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
+            <Image
+              src="/lysis.svg"
+              alt=""
+              width={20}
+              draggable={false}
+              height={20}
+              className="pointer-events-none h-5 w-5 select-none rounded-[4px]"
+            />
             lysis
             <span className="text-zinc-600">/</span>
             <span className="text-zinc-500">v0.1</span>

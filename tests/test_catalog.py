@@ -37,6 +37,7 @@ def test_score_repo():
     assert e["repo"] == "a/b" and e["language"] == "python"
     assert e["open_issues"] == 4 and e["good_first_issues"] == 4
     assert e["prs_90d"] == 1 and 0.4 < e["score"] <= 0.5
+    assert e["validated"] is True
 
 
 def test_too_few_open_issues_skipped():

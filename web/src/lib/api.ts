@@ -70,10 +70,12 @@ export type RepoItem = {
   size_kb: number;
   open_issues: number;
   good_first_issues: number;
+  
   prs_90d: number;
   score: number;
   level: "beginner" | "intermediate" | "advanced";
   active: boolean;
+  validated: boolean;
 };
 
 export type ReposResponse = { model_date: string; total: number; repos: RepoItem[] };
