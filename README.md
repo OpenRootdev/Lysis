@@ -7,7 +7,7 @@ Beginner-friendly GitHub issue ranker. Give it a repo and it ranks the open issu
 
 Labels like `good first issue` are often stale or wrong, so Lysis learns from what actually happened: issues that first-time contributors really closed.
 
-**Live demo:** https://lysis-alpha.vercel.app · [API docs](https://lysis-3ocq.onrender.com/docs) · [legacy Streamlit demo](https://mcx78yh52appm5botjqrh52.streamlit.app/)
+**Live demo:** https://trylysis.me · [API docs](https://lysis-3ocq.onrender.com/docs) · [legacy Streamlit demo](https://mcx78yh52appm5botjqrh52.streamlit.app/)
 
 
 ## How it works
