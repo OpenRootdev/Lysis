@@ -101,16 +101,16 @@ export default function Home() {
     <main className="app-shell mx-auto flex w-full max-w-5xl flex-col px-4 pb-4 pt-6 sm:px-5 sm:pt-8">
       <header className="shrink-0">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 font-mono text-sm text-emerald-400">
+          <div className="flex items-center gap-1 font-mono text-sm text-emerald-400">
             <Image
               src="/lysis.svg"
               alt=""
-              width={20}
+              width={25}
               draggable={false}
-              height={20}
-              className="pointer-events-none h-5 w-5 select-none rounded-[4px]"
+              height={25}
+              className="pointer-events-none h-8 w-8 select-none rounded-sm"
             />
-            lysis
+          lysis
             <span className="text-zinc-600">/</span>
             <span className="text-zinc-500">v0.1</span>
           </div>
