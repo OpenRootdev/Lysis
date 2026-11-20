@@ -64,12 +64,11 @@ class Vote(BaseModel):
 
 
 def client_ip(request: Request):
-    # The right-most entry is added by Render's proxy, so a client can't spoof it.
     fwd = request.headers.get("x-forwarded-for", "")
+    print("DEBUG ip:", fwd, "| cf:", request.headers.get("cf-connecting-ip"), flush=True)
     if fwd:
         return fwd.split(",")[-1].strip()
     return request.client.host if request.client else "unknown"
-
 
 def limit_ip(request: Request):
     if not PER_IP.allow(client_ip(request)):
