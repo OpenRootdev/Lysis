@@ -32,6 +32,21 @@ app.add_middleware(
     allow_methods=["GET", "HEAD", "POST"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    resp = await call_next(request)
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    resp.headers["X-Frame-Options"] = "DENY"
+    resp.headers["Referrer-Policy"] = "no-referrer"
+    resp.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    resp.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
+    if not request.url.path.startswith(("/docs", "/openapi", "/redoc")):
+        resp.headers["Content-Security-Policy"] = (
+            "default-src 'none'; frame-ancestors 'none'"
+        )
+    return resp
+
 REPO = r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
 PER_IP = SlidingWindow(int(os.getenv("RATE_PER_IP", "30")))
 GLOBAL = SlidingWindow(int(os.getenv("RATE_GLOBAL", "300")))
