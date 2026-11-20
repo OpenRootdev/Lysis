@@ -12,6 +12,11 @@ const securityHeaders = [
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains",
   },
+  {
+    key: "Content-Security-Policy-Report-Only",
+    value:
+      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://lysis-3ocq.onrender.com https://*.supabase.co; frame-ancestors 'none'",
+  },
 ];
 
 const nextConfig: NextConfig = {
