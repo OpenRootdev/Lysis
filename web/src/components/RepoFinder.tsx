@@ -1,4 +1,3 @@
-
 "use client";
 import { logActivity } from "@/lib/activity";
 import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
@@ -26,8 +25,7 @@ const NAMES: Record<string, string> = {
   python: "Python",
 };
 
-const label = (l: string) =>
-  NAMES[l] ?? l.charAt(0).toUpperCase() + l.slice(1);
+const label = (l: string) => NAMES[l] ?? l.charAt(0).toUpperCase() + l.slice(1);
 
 const REPO_RE = /^[\w.-]+\/[\w.-]+$/;
 
@@ -112,8 +110,7 @@ export default function RepoFinder({
   const cur = LEVELS[idx];
   const parsed = parseRepo(q);
   const direct = REPO_RE.test(parsed) ? parsed : null;
-  const loading =
-    Boolean(key) && result?.key !== key && failedKey !== key;
+  const loading = Boolean(key) && result?.key !== key && failedKey !== key;
   const failed = metaFailed || (Boolean(key) && failedKey === key);
 
   const rows = result ? result.repos.slice(0, 12) : [];
@@ -304,10 +301,7 @@ export default function RepoFinder({
               <p className="text-sm text-zinc-500">No repositories match.</p>
             ) : (
               <>
-                <ol
-                  key={result.key}
-                  className="grid gap-3 sm:grid-cols-2"
-                >
+                <ol key={result.key} className="grid gap-3 sm:grid-cols-2">
                   {visible.map((r, i) => (
                     <li
                       key={r.repo}
@@ -382,7 +376,6 @@ export default function RepoFinder({
                 )}
               </>
             )}
-            
           </div>
         )}
         {children}
