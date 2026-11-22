@@ -1,5 +1,18 @@
 export const API = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 
+export type Driver = { feature: string; effect: number };
+export type Insights = {
+  n_open: number;
+  n_scored: number;
+  n_gfi: number;
+  median_score: number;
+  context: {
+    repo_age_days: number | null;
+    merged_90d: number | null;
+    days_since_merge: number | null;
+  };
+};
+
 export type Issue = {
   score: number;
   number: number;
@@ -7,14 +20,16 @@ export type Issue = {
   url: string;
   full_title: string;
   why?: string | null;
+  drivers?: Driver[];
 };
 
-export type RankResponse = { repo: string; model_date: string; issues: Issue[] };
+export type RankResponse = { repo: string; model_date: string; issues: Issue[]; insights?: Insights };
 
 export type ModelMeta = {
   trained_at: string;
   n_train: number;
   cv: { ap: number; auc: number };
+  importance?: Record<string, number>;
 };
 
 export type Vote = {
@@ -51,7 +66,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const getModel = () => request<ModelMeta>("/model");
 
 export const rank = (repo: string, top: number) =>
-  request<RankResponse>(`/rank?repo=${encodeURIComponent(repo)}&top=${top}&explain=true`);
+  request<RankResponse>(`/rank?repo=${encodeURIComponent(repo)}&top=${top}&explain=true&insights=true`);
 
 export const sendVote = (vote: Vote) =>
   request<{ saved: boolean }>("/feedback", {
@@ -59,7 +74,6 @@ export const sendVote = (vote: Vote) =>
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(vote),
   });
-
 
 export type RepoItem = {
   repo: string;
@@ -70,7 +84,6 @@ export type RepoItem = {
   size_kb: number;
   open_issues: number;
   good_first_issues: number;
-  
   prs_90d: number;
   score: number;
   level: "beginner" | "intermediate" | "advanced";

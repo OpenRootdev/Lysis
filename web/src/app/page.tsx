@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { safeGithubUrl } from "@/lib/safeUrl";
+import AboutSection from "@/components/AboutSection";
+import Link from "next/link";
 
 import {
   API,
@@ -27,6 +29,7 @@ export default function Home() {
   const [data, setData] = useState<RankResponse | null>(null);
   const [meta, setMeta] = useState<ModelMeta | null>(null);
   const [votes, setVotes] = useState<Record<string, "up" | "down">>({});
+  
 
   useEffect(() => {
     getModel()
@@ -51,6 +54,11 @@ export default function Home() {
     try {
       const res = await rank(name, 10);
       setData(res);
+      try {
+        sessionStorage.setItem("lysis:last", JSON.stringify(res));
+      } catch {
+        /* storage unavailable */
+      }
       void logActivity({ kind: "rank", repo: res.repo });
       setVotes({});
     } catch (err) {
@@ -97,6 +105,8 @@ export default function Home() {
 
   const max = data ? Math.max(...data.issues.map((i) => i.score), 0.0001) : 1;
 
+  const btn =
+    "inline-flex h-9 w-9 items-center justify-center rounded-md border border-zinc-800 text-zinc-300 hover:border-emerald-400 hover:text-emerald-400";
   return (
     <main className="app-shell mx-auto flex w-full max-w-5xl flex-col px-4 pb-4 pt-6 sm:px-5 sm:pt-8">
       <header className="shrink-0">
@@ -110,11 +120,33 @@ export default function Home() {
               height={25}
               className="pointer-events-none h-8 w-8 select-none rounded-sm"
             />
-          lysis
+            lysis
             <span className="text-zinc-600">/</span>
             <span className="text-zinc-500">v0.1</span>
           </div>
           <div className="flex items-center gap-2">
+            {data && !loading && data.insights && (
+              <Link
+                href="/insights"
+                aria-label="How it works"
+                title="How it works"
+                className={btn}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 11v5M12 8h.01" />
+                </svg>
+              </Link>
+            )}
             <HistoryButton />
             <AuthButton />
           </div>
@@ -257,7 +289,7 @@ export default function Home() {
             )}
           </section>
         )}
-
+        <AboutSection />
         <footer className="mt-16 border-t border-zinc-800 pt-6 font-mono text-xs text-zinc-600">
           {meta
             ? `model ${meta.trained_at.slice(0, 10)} · ${meta.n_train.toLocaleString()} issues · CV AP ${meta.cv.ap} · AUC ${meta.cv.auc}`
@@ -272,7 +304,6 @@ export default function Home() {
             >
               source
             </a>
-
             <a
               href={`${API}/docs`}
               target="_blank"
@@ -281,6 +312,9 @@ export default function Home() {
             >
               api docs
             </a>
+            <Link href="/privacy" className="hover:text-zinc-400">
+              privacy
+            </Link>
           </div>
         </footer>
       </RepoFinder>
