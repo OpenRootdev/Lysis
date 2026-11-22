@@ -54,6 +54,7 @@ export default function Home() {
     try {
       const res = await rank(name, 10);
       setData(res);
+      window.history.replaceState(null, "", `?repo=${res.repo}`);
       try {
         sessionStorage.setItem("lysis:last", JSON.stringify(res));
       } catch {
@@ -168,6 +169,7 @@ export default function Home() {
         onClear={() => {
           setData(null);
           setError(null);
+          window.history.replaceState(null, "", "/");
         }}
       >
         {loading && (
