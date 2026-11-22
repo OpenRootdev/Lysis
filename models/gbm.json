@@ -1,21 +1,21 @@
 {
-  "n_train": 18338,
-  "base_rate": 0.066,
+  "n_train": 53925,
+  "base_rate": 0.071,
   "cv": {
-    "ap": 0.259,
-    "auc": 0.792
+    "ap": 0.251,
+    "auc": 0.789
   },
   "importance": {
-    "gfi": 0.2124,
-    "repo_age_days": 0.0908,
-    "title_len": 0.0643,
-    "n_labels": 0.0465,
-    "body_len_log": 0.0442,
-    "prs_90d": 0.0361,
-    "has_code": 0.0274,
-    "lang_python": 0.0267
+    "gfi": 0.1966,
+    "title_len": 0.0428,
+    "body_len_log": 0.0369,
+    "repo_age_days": 0.0315,
+    "prs_90d": 0.0271,
+    "has_code": 0.0229,
+    "is_maintainer": 0.022,
+    "n_labels": 0.0164
   },
-  "trained_at": "2026-11-19T17:06:38.369956+00:00",
+  "trained_at": "2026-11-22T01:27:29.839375+00:00",
   "sklearn": "1.9.1",
   "features": [
     "gfi",

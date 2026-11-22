@@ -1,3 +1,5 @@
+import json
+
 import httpx
 
 from lysis.ingestion.fetch import discover, fetch_repo
@@ -37,3 +39,24 @@ def test_fetch_repo_catalog_only_skips_closed():
 
     out = fetch_repo(GH(), "a/b", catalog_only=True)
     assert calls == ["open"] and out["closed_issues"] == []
+    
+def test_backfill_closed(tmp_path, monkeypatch):
+    from lysis.ingestion import fetch as f
+
+    monkeypatch.setattr(f, "OUT", tmp_path)
+    for n, lang in (("a__x", "TypeScript"), ("b__y", "Go")):
+        data = {
+            "repo": {"full_name": n.replace("__", "/"), "language": lang},
+            "closed_issues": [],
+            "open_issues": [],
+            "merged_prs": [],
+        }
+        (tmp_path / f"{n}.json").write_text(json.dumps(data))
+
+    class GH:
+        def list_issues(self, owner, repo, state="open"):
+            return [{"number": 1}]
+
+    f.backfill_closed(GH(), "typescript", None)
+    assert json.loads((tmp_path / "a__x.json").read_text())["closed_issues"] == [{"number": 1}]
+    assert json.loads((tmp_path / "b__y.json").read_text())["closed_issues"] == []

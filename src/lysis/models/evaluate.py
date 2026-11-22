@@ -96,6 +96,11 @@ def cv_by_language(df, rankers, n_splits=5, min_n=200):
     return out
 
 
+def validated(res, min_n=500, min_pos=30):
+    g, b = res["gbm"], res["labels-only"]
+    enough = res["n"] >= min_n and res["n"] * res["base"] >= min_pos
+    return bool(enough and g["ap"] > b["ap"] and g["auc"] > b["auc"])
+
 
 def main():
     df = load_dataset()
@@ -111,7 +116,7 @@ def main():
     }
     print("cv:", cross_validate(df, rankers))
     for lang, res in cv_by_language(df, rankers).items():
-        print("lang:", lang, res)
+        print("lang:", lang, res, "validated:", validated(res))
 
 
 if __name__ == "__main__":

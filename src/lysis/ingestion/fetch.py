@@ -3,7 +3,8 @@
 
 import argparse
 import json
-from datetime import date, time, timedelta
+import time
+from datetime import date, timedelta
 from pathlib import Path
 
 import httpx
@@ -52,36 +53,101 @@ def fetch_repo(gh, full_name, catalog_only=False):
         "merged_prs": [p for p in prs if p.get("merged_at")],
     }
 
+
 def is_stale(path, days):
-    return days is not None and time.time() - path.stat().st_mtime > days * 86400
+    return (
+        days is not None
+        and time.time() - path.stat().st_mtime > days * 86400
+    )
+
+
+def backfill_closed(gh, language, limit):
+    done = 0
+
+    for path in sorted(OUT.glob("*.json")):
+        if limit is not None and done >= limit:
+            break
+
+        d = json.loads(path.read_text())
+
+        if (
+            (d["repo"].get("language") or "").lower() != language
+            or d["closed_issues"]
+        ):
+            continue
+
+        owner, repo = d["repo"]["full_name"].split("/")
+
+        try:
+            d["closed_issues"] = gh.list_issues(
+                owner, repo, state="closed"
+            )
+        except httpx.HTTPError as e:
+            print("skipped", d["repo"]["full_name"], e)
+            continue
+
+        path.write_text(json.dumps(d))
+        done += 1
+
+        print("backfilled", d["repo"]["full_name"])
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--language", default="python", help="a language, or 'all'")
+    parser.add_argument(
+        "--language",
+        default="python",
+        help="a language, or 'all'",
+    )
     parser.add_argument("--catalog-only", action="store_true")
     parser.add_argument("--refresh-days", type=float, default=None)
+    parser.add_argument("--backfill-closed", action="store_true")
+    parser.add_argument("--limit", type=int, default=None)
+
     args = parser.parse_args()
+
     load_dotenv()
     gh = GitHubClient()
+
     OUT.mkdir(parents=True, exist_ok=True)
-    langs = CATALOG_LANGUAGES if args.language == "all" else [args.language]
+
+    langs = (
+        CATALOG_LANGUAGES
+        if args.language == "all"
+        else [args.language]
+    )
+
+    if args.backfill_closed:
+        for lang in langs:
+            backfill_closed(gh, lang, args.limit)
+        return
+
     for lang in langs:
-        catalog_only = args.catalog_only or lang not in TRAIN_LANGUAGES
+        catalog_only = (
+            args.catalog_only or lang not in TRAIN_LANGUAGES
+        )
+
         for name in discover(gh, language=lang):
             path = OUT / f"{name.replace('/', '__')}.json"
             exists = path.exists()
+
             if exists and not is_stale(path, args.refresh_days):
                 continue
+
             try:
                 data = fetch_repo(gh, name, catalog_only)
             except httpx.HTTPError as e:
                 print("skipped", name, e)
                 continue
+
             if exists and catalog_only:
-                data["closed_issues"] = json.loads(path.read_text())["closed_issues"]
+                data["closed_issues"] = json.loads(
+                    path.read_text()
+                )["closed_issues"]
+
             path.write_text(json.dumps(data))
             print("saved", name, lang)
+
 
 if __name__ == "__main__":
     main()

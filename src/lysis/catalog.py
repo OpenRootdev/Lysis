@@ -8,12 +8,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from lysis.config import VALIDATED_LANGUAGES as VALIDATED
 from lysis.features.rows import issue_row, merged_times
 from lysis.models.artifact import load_meta, load_model
 
 CATALOG_PATH = Path("models/catalog.json")
 MIN_OPEN = 3
-from lysis.config import TRAIN_LANGUAGES as VALIDATED
 
 # Minimum merged PRs in the last 90 days for a repo to count as active, per level.
 ACTIVITY_GATE = {"beginner": 5, "intermediate": 3, "advanced": 1}

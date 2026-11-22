@@ -3,4 +3,6 @@
 CATALOG_LANGUAGES = ["python", "javascript", "go", "typescript", "java", "rust"]
 # Languages the model was trained and tested on. Their repos get a full fetch;
 # the others are catalog-only and shown as "unvalidated".
-TRAIN_LANGUAGES = {"python", "javascript"}
+# Languages whose repos get a full fetch (closed issues included, so training data grows).
+TRAIN_LANGUAGES = {"python", "javascript", "go", "typescript", "java", "rust"}
+VALIDATED_LANGUAGES = {"python", "go", "typescript", "java", "rust"}

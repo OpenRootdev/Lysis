@@ -135,8 +135,9 @@ def rank(
     m: Annotated[Any, Depends(get_model)],
     top: Annotated[int, Query(ge=1, le=30)] = 10,
     explain: bool = False,
+    insights: bool = False,
 ):
-    key = (repo.lower(), top, explain)
+    key = (repo.lower(), top, explain, insights)
     cached = CACHE.get(key)
     if cached is not None:
         return cached
@@ -145,7 +146,7 @@ def rank(
             429, "The service is busy, try again in a few minutes.", headers={"Retry-After": "300"}
         )
     try:
-        out = rank_repo(gh, repo, m[0], top)
+        out = rank_repo(gh, repo, m[0], top, insights=insights)
     except RateLimitError as e:
         raise HTTPException(
             429, "GitHub rate limit reached, try again later.", headers={"Retry-After": "300"}
@@ -156,10 +157,16 @@ def rank(
     except httpx.HTTPError as e:
         raise HTTPException(502, "GitHub unreachable") from e
     rows = out.drop(columns=["body"]).to_dict("records")
+    ins = out.attrs.get("insights")
+    if ins:
+        for row, d in zip(rows, ins.pop("drivers")):
+            row["drivers"] = d
     if explain:
         for row, body in zip(rows[:5], out["body"].tolist(), strict=False):
             row["why"] = explain_issue(row["full_title"], body)
     result = {"repo": repo, "model_date": m[1]["trained_at"][:10], "issues": rows}
+    if ins:
+        result["insights"] = ins
     CACHE.set(key, result)
     return result
 
