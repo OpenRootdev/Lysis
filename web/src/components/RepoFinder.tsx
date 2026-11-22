@@ -240,7 +240,7 @@ export default function RepoFinder({
             <div
               role="radiogroup"
               aria-label="Experience level"
-              title="Level reflects repository size and complexity, not your skill"
+              data-tip="Level reflects repository size and complexity, not your skill"
               className="flex items-center gap-3 sm:ml-auto"
             >
               <div className="flex gap-1">
@@ -312,7 +312,7 @@ export default function RepoFinder({
 
                       {!r.validated && (
                         <span
-                          title="The model was trained on Python and JavaScript. Scores for this language are untested."
+                          data-tip="The model was trained on Python and JavaScript. Scores for this language are untested."
                           className="mt-1 self-start rounded border border-zinc-700 px-1.5 py-0.5 font-mono text-[10px] text-zinc-500"
                         >
                           unvalidated

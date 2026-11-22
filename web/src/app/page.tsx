@@ -130,7 +130,7 @@ export default function Home() {
               <Link
                 href="/insights"
                 aria-label="How it works"
-                title="How it works"
+                data-tip="How it works"
                 className={btn}
               >
                 <svg
