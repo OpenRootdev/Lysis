@@ -51,6 +51,7 @@ export default function RepoFinder({
   const [result, setResult] = useState<Result | null>(null);
   const [failedKey, setFailedKey] = useState<string | null>(null);
   const [ranked, setRanked] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     getReposMeta()
@@ -116,6 +117,8 @@ export default function RepoFinder({
   const failed = metaFailed || (Boolean(key) && failedKey === key);
 
   const rows = result ? result.repos.slice(0, 12) : [];
+  const visible = expanded ? rows : rows.slice(0, 6);
+
   const browsing = !q.trim();
   const go = Boolean(direct) && direct !== ranked;
 
@@ -300,78 +303,88 @@ export default function RepoFinder({
             {rows.length === 0 ? (
               <p className="text-sm text-zinc-500">No repositories match.</p>
             ) : (
-              <ol
-                key={result.key}
-                className="grid gap-3 sm:grid-cols-2"
-              >
-                {rows.map((r, i) => (
-                  <li
-                    key={r.repo}
-                    className="fade-up flex flex-col rounded-xl border border-zinc-800 bg-zinc-900/30 p-4"
-                    style={{ animationDelay: `${Math.min(i, 8) * 30}ms` }}
-                  >
-                    <a
-                      href={safeGithubUrl(r.url)}
-                      onClick={() => void logActivity({ kind: "open", repo: r.repo })}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium text-zinc-100 hover:text-emerald-400"
+              <>
+                <ol
+                  key={result.key}
+                  className="grid gap-3 sm:grid-cols-2"
+                >
+                  {visible.map((r, i) => (
+                    <li
+                      key={r.repo}
+                      className="fade-up flex flex-col rounded-xl border border-zinc-800 bg-zinc-900/30 p-4"
+                      style={{ animationDelay: `${Math.min(i, 8) * 30}ms` }}
                     >
-                      {r.repo}
-                    </a>
-
-                     {!r.validated && (
-                      <span
-                        title="The model was trained on Python and JavaScript. Scores for this language are untested."
-                        className="ml-2 rounded border border-zinc-700 px-1.5 py-0.5 font-mono text-[10px] text-zinc-500"
+                      <a
+                        href={safeGithubUrl(r.url)}
+                        onClick={() =>
+                          void logActivity({ kind: "open", repo: r.repo })
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-zinc-100 hover:text-emerald-400"
                       >
-                        unvalidated
-                      </span>
-                  )}
+                        {r.repo}
+                      </a>
 
-                    <p className="mt-1 line-clamp-2 text-xs text-zinc-400 sm:text-sm">
-                      {r.description || "No description."}
-                    </p>
-
-                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px] text-zinc-500">
-                      <span>★ {r.stars.toLocaleString()}</span>
-                      <span>{r.prs_90d} PRs merged / 90d</span>
-                      <span>{r.open_issues} open issues</span>
-
-                      {r.good_first_issues > 0 && (
-                        <span>
-                          {r.good_first_issues} labeled good first issue
+                      {!r.validated && (
+                        <span
+                          title="The model was trained on Python and JavaScript. Scores for this language are untested."
+                          className="mt-1 self-start rounded border border-zinc-700 px-1.5 py-0.5 font-mono text-[10px] text-zinc-500"
+                        >
+                          unvalidated
                         </span>
                       )}
-                    </div>
 
-                    <div className="mt-auto flex items-center gap-3 pt-3">
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-800">
-                        <div
-                          className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                          style={{ width: `${(r.score / max) * 100}%` }}
-                        />
+                      <p className="mt-1 line-clamp-2 text-xs text-zinc-400 sm:text-sm">
+                        {r.description || "No description."}
+                      </p>
+
+                      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px] text-zinc-500">
+                        <span>★ {r.stars.toLocaleString()}</span>
+                        <span>{r.prs_90d} PRs merged / 90d</span>
+                        <span>{r.open_issues} open issues</span>
+
+                        {r.good_first_issues > 0 && (
+                          <span>
+                            {r.good_first_issues} labeled good first issue
+                          </span>
+                        )}
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => pick(r.repo)}
-                        className="shrink-0 rounded border border-zinc-700 px-3 py-1 text-xs text-zinc-200 transition-colors hover:border-emerald-500 hover:text-emerald-400"
-                      >
-                        Find issues →
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            )}
+                      <div className="mt-auto flex items-center gap-3 pt-3">
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-800">
+                          <div
+                            className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                            style={{ width: `${(r.score / max) * 100}%` }}
+                          />
+                        </div>
 
-            <p className="mt-2 font-mono text-xs text-zinc-600">
-              Bars show fit relative to this list, not a probability.
-            </p>
+                        <button
+                          type="button"
+                          onClick={() => pick(r.repo)}
+                          className="shrink-0 rounded border border-zinc-700 px-3 py-1 text-xs text-zinc-200 transition-colors hover:border-emerald-500 hover:text-emerald-400"
+                        >
+                          Find issues →
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+
+                {rows.length > 6 && (
+                  <button
+                    type="button"
+                    onClick={() => setExpanded((v) => !v)}
+                    className="mt-4 rounded border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:border-emerald-500 hover:text-emerald-400"
+                  >
+                    {expanded ? "Show fewer" : `Show all ${rows.length}`}
+                  </button>
+                )}
+              </>
+            )}
+            
           </div>
         )}
-
         {children}
       </div>
     </section>
