@@ -100,7 +100,7 @@ export default function HistoryButton() {
     <div className="relative" ref={box}>
       <button
         className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-zinc-800 text-zinc-300 hover:border-emerald-400 hover:text-emerald-400"
-        title="Activity log"
+        data-tip="Activity log"
         aria-label="Activity log"
         aria-expanded={open}
         onClick={() => {
