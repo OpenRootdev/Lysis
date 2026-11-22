@@ -96,16 +96,6 @@ export default function RepoFinder({
     };
   }, [key, language, level]);
 
-  useEffect(() => {
-    if (key) {
-      window.history.replaceState(
-        null,
-        "",
-        `?language=${language}&level=${level}`,
-      );
-    }
-  }, [key, language, level]);
-
   const idx = LEVELS.findIndex((l) => l.id === level);
   const cur = LEVELS[idx];
   const parsed = parseRepo(q);
