@@ -26,7 +26,7 @@ The URL or endpoint and a clear description are usually enough. Complex issues m
 ## What to expect
 
 - Acknowledgement within 7 days.
-- An initial assessment within 14 days, with an expected resolution date where we can give one.
+- An initial assessment within 14 days. We will share an expected resolution date when we can.
 - Updates as we work on a fix. How long a fix takes depends on severity.
 - Credit in the public advisory, unless you prefer to stay anonymous.
 - If you follow this policy in good faith, we will not take legal action against you for the report.
@@ -58,7 +58,7 @@ Out of scope:
 
 - Do not run automated scanners or load tests against production. If you want to test with tools, contact us and we will point you to a test target.
 - Do not access, download, change or delete other people's data. Use your own account and the smallest proof you can.
-- Do not disclose the issue publicly until it has been fixed, and we will agree on a disclosure date with you.
+- Please keep the issue private until it has been fixed. We will agree on a disclosure date with you..
 
 ## What we already do
 
@@ -71,3 +71,7 @@ Out of scope:
 ## Handling secrets
 
 Never include tokens, keys or personal data in a report, issue or pull request. If you find a leaked credential in this repository or its history, report it privately and we will rotate it.
+
+## Questions
+
+For general security questions that are not vulnerability reports, email <help@trylysis.me>.
