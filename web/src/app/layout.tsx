@@ -15,10 +15,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const title = "Lysis: Find beginner-friendly GitHub issues";
+const title = "Lysis: Find Good First Issues on GitHub for Beginners";
 const description =
-  "Lysis ranks a GitHub repository's open, unassigned issues by how likely a first-time contributor is to get a PR merged, learned from real outcomes instead of labels.";
-
+  "Find good first issues on GitHub you can actually finish. Lysis ranks a repo's open issues by how likely a first-time contributor is to get a PR merged.";
+  
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: { default: title, template: "%s | Lysis" },
@@ -31,13 +31,24 @@ export const metadata: Metadata = {
 
 const jsonLd = JSON.stringify({
   "@context": "https://schema.org",
-  "@type": "WebApplication",
-  name: "Lysis",
-  url: SITE_URL,
-  description,
-  applicationCategory: "DeveloperApplication",
-  operatingSystem: "Any",
-  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: "Lysis",
+      alternateName: ["Lysis", "trylysis.me"],
+      url: `${SITE_URL}/`,
+    },
+    {
+      "@type": "WebApplication",
+      name: "Lysis",
+      url: `${SITE_URL}/`,
+      description,
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "Any",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+  ],
 }).replace(/</g, "\\u003c");
 
 
